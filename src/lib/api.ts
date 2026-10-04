@@ -1,11 +1,16 @@
 /**
  * Тонкий клиент к backend API (`flamenco-studio-bot/src/flamenco_bot/api`).
  *
+ * Ошибка запроса возвращается как `ApiResult` (см. `apiResult.ts`), а не как
+ * пустой список — страница показывает «сервис временно недоступен».
+ *
  * Запросы выполняются на сервере Next.js (в серверных компонентах), а не в
  * браузере — так фронтенд не дублирует бизнес-логику и не требует CORS на
  * backend. `API_BASE_URL` — серверная переменная окружения (без
  * `NEXT_PUBLIC_`), в браузер никогда не попадает.
  */
+
+import { requestJson, type ApiResult } from "./apiResult";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -33,31 +38,21 @@ export type ClassFormat = {
   level: string;
 };
 
-async function apiFetch<T>(path: string): Promise<T | null> {
-  try {
-    const response = await fetch(`${API_BASE_URL}${path}`);
-    if (!response.ok) {
-      console.error(`API request failed: ${path} -> ${response.status}`);
-      return null;
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    console.error(`API request errored: ${path}`, error);
-    return null;
-  }
+function apiGet<T>(path: string): Promise<ApiResult<T>> {
+  return requestJson<T>(`${API_BASE_URL}${path}`);
 }
 
-export async function getSchedule(classKey?: string): Promise<ClassSlot[]> {
+export function getSchedule(classKey?: string): Promise<ApiResult<ClassSlot[]>> {
   const query = classKey ? `?class_key=${encodeURIComponent(classKey)}` : "";
-  return (await apiFetch<ClassSlot[]>(`/api/schedule${query}`)) ?? [];
+  return apiGet<ClassSlot[]>(`/api/schedule${query}`);
 }
 
-export async function getPackages(): Promise<LessonPackage[]> {
-  return (await apiFetch<LessonPackage[]>("/api/packages")) ?? [];
+export function getPackages(): Promise<ApiResult<LessonPackage[]>> {
+  return apiGet<LessonPackage[]>("/api/packages");
 }
 
-export async function getClasses(): Promise<ClassFormat[]> {
-  return (await apiFetch<ClassFormat[]>("/api/classes")) ?? [];
+export function getClasses(): Promise<ApiResult<ClassFormat[]>> {
+  return apiGet<ClassFormat[]>("/api/classes");
 }
 
 // Правила записи — из backend (те же константы, по которым их проверяет
@@ -74,9 +69,8 @@ const DEFAULT_BOOKING_RULES: BookingRules = {
 };
 
 export async function getBookingRules(): Promise<BookingRules> {
-  return (
-    (await apiFetch<BookingRules>("/api/bookings/rules")) ?? DEFAULT_BOOKING_RULES
-  );
+  const result = await apiGet<BookingRules>("/api/bookings/rules");
+  return result.ok ? result.data : DEFAULT_BOOKING_RULES;
 }
 
 /** Записаться можно только на открытое занятие со свободными местами. */

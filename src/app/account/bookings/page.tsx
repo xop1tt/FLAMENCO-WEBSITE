@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getMyBookings, getProfile, type UserBooking } from "@/lib/account";
 import { getBookingRules } from "@/lib/api";
 import { cancelBookingAction } from "@/lib/actions";
 import { balanceLabel, formatClassDateTime, hoursLabel } from "@/lib/format";
 import { GLASS_BUTTON_CLASS, PRIMARY_BUTTON_CLASS } from "@/lib/glass";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 
 export const metadata: Metadata = {
   title: "Мои занятия",
@@ -28,16 +30,20 @@ export default async function AccountBookingsPage({
   searchParams: SearchParams;
 }) {
   const { cancelled, cancel_error: cancelError } = await searchParams;
-  const [bookings, profile, rules] = await Promise.all([
+  const [bookingsResult, profileResult, rules] = await Promise.all([
     getMyBookings(),
     getProfile(),
     getBookingRules(),
   ]);
-  const { upcoming, history, now } = splitBookings(bookings);
-  const balance = profile ? balanceLabel(profile.lesson_credits) : null;
+  if (!bookingsResult.ok && bookingsResult.error === "unauthorized") {
+    redirect("/login");
+  }
+  const balance = profileResult.ok
+    ? balanceLabel(profileResult.data.lesson_credits)
+    : null;
 
-  return (
-    <div className="flex flex-col gap-8">
+  const notices = (
+    <>
       {cancelled && (
         <p className="rounded-md bg-[var(--success-bg)] p-3 text-sm text-[var(--success-text)]">
           Запись отменена. Занятие вернулось на баланс
@@ -49,6 +55,24 @@ export default async function AccountBookingsPage({
           {cancelError}
         </p>
       )}
+    </>
+  );
+
+  // Записи не загрузились — не показываем «Предстоящих занятий пока нет»:
+  // это было бы неправдой.
+  if (!bookingsResult.ok) {
+    return (
+      <div className="flex flex-col gap-8">
+        {notices}
+        <ServiceUnavailableNotice />
+      </div>
+    );
+  }
+  const { upcoming, history, now } = splitBookings(bookingsResult.data);
+
+  return (
+    <div className="flex flex-col gap-8">
+      {notices}
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

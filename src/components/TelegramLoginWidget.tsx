@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
+import { SERVICE_UNAVAILABLE_MESSAGE } from "@/lib/apiResult";
 
 /**
  * Поля, которые Telegram Login Widget передаёт в колбэк после входа.
@@ -54,7 +55,9 @@ export function TelegramLoginWidget() {
           setError(
             response.status === 401
               ? "Не удалось подтвердить вход через Telegram. Попробуйте ещё раз."
-              : "Что-то пошло не так. Попробуйте ещё раз позже.",
+              : response.status >= 500
+                ? SERVICE_UNAVAILABLE_MESSAGE
+                : "Что-то пошло не так. Попробуйте ещё раз позже.",
           );
           setPending(false);
           return;
@@ -62,7 +65,7 @@ export function TelegramLoginWidget() {
         router.push("/");
         router.refresh();
       } catch {
-        setError("Не удалось связаться с сервером. Проверьте соединение.");
+        setError(SERVICE_UNAVAILABLE_MESSAGE);
         setPending(false);
       }
     };

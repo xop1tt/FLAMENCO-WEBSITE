@@ -7,13 +7,18 @@ FROM node:24-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# next.config.ts reads API_BASE_URL only at request time (server-side fetch
-# and the rewrites() destination), not during the build — no build ARG
-# needed for it. NEXT_PUBLIC_* variables are the opposite: Next.js inlines
-# them into the client bundle at build time, so this one must be supplied
-# as a build ARG (see compose.yaml's frontend.build.args).
+# NEXT_PUBLIC_* variables are inlined into the client bundle at build time,
+# so this one must be supplied as a build ARG (see compose.yaml's
+# frontend.build.args).
 ARG NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
 ENV NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=$NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
+# API_BASE_URL is read twice: server-side fetch (src/lib/*) reads it at
+# request time from the container environment, but the rewrites() destination
+# in next.config.ts is evaluated during `next build` and baked into
+# .next/routes-manifest.json. Without this ARG the browser-facing /api/*
+# proxy (Telegram login) would point at http://127.0.0.1:8000 inside the
+# container. The ARG is visible to `npm run build` as an env variable.
+ARG API_BASE_URL=http://api:8000
 RUN npm run build
 
 FROM node:24-slim AS runner

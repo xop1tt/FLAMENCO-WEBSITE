@@ -15,9 +15,14 @@ export type Direction = {
   level: string;
 };
 
+// При недоступном API — пустой список: направления лишь подписи и фильтры,
+// а саму ошибку страница показывает по результату расписания.
 export async function getDirections(): Promise<Direction[]> {
-  const classes = await getClasses();
-  return classes.map((item) => ({
+  const result = await getClasses();
+  if (!result.ok) {
+    return [];
+  }
+  return result.data.map((item) => ({
     key: item.key,
     label: item.label,
     description: item.description,

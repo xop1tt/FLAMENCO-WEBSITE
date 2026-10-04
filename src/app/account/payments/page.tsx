@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { GLASS_BUTTON_CLASS } from "@/lib/glass";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 import { getMyPayments, type PaymentHistoryItem } from "@/lib/account";
 import { checkPaymentAction } from "@/lib/actions";
 import { formatClassDateTime, formatPrice } from "@/lib/format";
@@ -26,6 +28,9 @@ export default async function AccountPaymentsPage({
 }) {
   const { checkout_error: checkoutError } = await searchParams;
   const payments = await getMyPayments();
+  if (!payments.ok && payments.error === "unauthorized") {
+    redirect("/login");
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -39,7 +44,9 @@ export default async function AccountPaymentsPage({
 
       <section>
         <h2 className="mb-4 text-xl font-semibold">История платежей</h2>
-        {payments.length === 0 ? (
+        {!payments.ok ? (
+          <ServiceUnavailableNotice />
+        ) : payments.data.length === 0 ? (
           <p className="text-[var(--text-secondary)]">
             Платежей пока нет. Выбрать абонемент можно на{" "}
             <Link href="/packages" className="text-[var(--primary)] hover:underline">
@@ -48,7 +55,7 @@ export default async function AccountPaymentsPage({
             .
           </p>
         ) : (
-          <PaymentList payments={payments} />
+          <PaymentList payments={payments.data} />
         )}
       </section>
     </div>

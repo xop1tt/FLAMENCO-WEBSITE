@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   // the server-rendered pages already call the API directly server-side
   // (see src/lib/api.ts); this rewrite is for future client-side calls
   // (auth, booking) that run in the browser.
+  //
+  // The destination is evaluated at `next build` time (baked into
+  // .next/routes-manifest.json), so API_BASE_URL must be set for the build —
+  // see the Dockerfile ARG. The proxy forwards X-Forwarded-For unchanged and
+  // does not add the client IP itself: the edge proxy in front of this
+  // server must set it (backend docs/deployment.md).
   async rewrites() {
     return [
       {

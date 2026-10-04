@@ -1,7 +1,7 @@
 services:
   # Публичный сайт (Next.js). Единственный сервис системы с портом,
-  # опубликованным на хост — перед ним должен стоять TLS-терминирующий
-  # reverse proxy, сам он слушает только HTTP.
+  # опубликованным на хост (только 127.0.0.1) — перед ним должен стоять
+  # TLS-терминирующий edge-прокси на том же хосте, сам он слушает только HTTP.
   #
   # Backend (бот + веб-API) — отдельный проект со своим compose.yaml. Сайт
   # обращается к его сервису `api` по имени в общей docker-сети
@@ -16,6 +16,10 @@ services:
         # build arg, а не environment: ниже. Значение берётся из .env рядом
         # с этим файлом (см. .env.example).
         NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME:?Set NEXT_PUBLIC_TELEGRAM_BOT_USERNAME to the bot's public @username}
+        # Адрес назначения rewrite /api/* (next.config.ts) Next.js вычисляет
+        # при сборке и записывает в .next/routes-manifest.json — environment:
+        # ниже на него уже не влияет. Должен совпадать с API_BASE_URL ниже.
+        API_BASE_URL: http://api:8000
     image: flamenco-studio-frontend:local
     init: true
     restart: unless-stopped
@@ -30,10 +34,17 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    # Только на localhost хоста: снаружи сайт доступен лишь через edge-прокси
+    # (TLS), который записывает IP клиента в X-Forwarded-For. Прямой доступ к
+    # :3000 позволил бы подставить свой X-Forwarded-For и обойти rate limit
+    # входа — Next.js передаёт этот заголовок в api как есть.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks:
-      - flamenco-web
+      flamenco-web:
+        # Постоянный адрес, которому доверяет api (FORWARDED_ALLOW_IPS в
+        # compose.yaml backend'а). Значения по умолчанию совпадают там и здесь.
+        ipv4_address: ${FLAMENCO_FRONTEND_IP:-10.89.250.10}
     logging:
       driver: local
       options:

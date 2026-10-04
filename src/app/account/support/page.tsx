@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getMySupportTickets } from "@/lib/account";
+import { SERVICE_UNAVAILABLE_MESSAGE } from "@/lib/apiResult";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 import { submitSupportMessageAction } from "@/lib/actions";
 import { formatClassDateTime } from "@/lib/format";
 
@@ -12,6 +15,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   rate_limited:
     "Слишком много сообщений подряд. Попробуйте через несколько минут.",
   network: "Не удалось связаться с сервером. Попробуйте ещё раз.",
+  unavailable: SERVICE_UNAVAILABLE_MESSAGE,
   failed: "Что-то пошло не так. Попробуйте ещё раз позже.",
 };
 
@@ -24,6 +28,9 @@ export default async function AccountSupportPage({
 }) {
   const { error, submitted } = await searchParams;
   const tickets = await getMySupportTickets();
+  if (!tickets.ok && tickets.error === "unauthorized") {
+    redirect("/login");
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -68,11 +75,13 @@ export default async function AccountSupportPage({
 
       <section>
         <h2 className="mb-4 text-xl font-semibold">Мои обращения</h2>
-        {tickets.length === 0 ? (
+        {!tickets.ok ? (
+          <ServiceUnavailableNotice />
+        ) : tickets.data.length === 0 ? (
           <p className="text-[var(--text-secondary)]">Обращений пока нет.</p>
         ) : (
           <ul className="flex flex-col gap-3">
-            {tickets.map((ticket) => (
+            {tickets.data.map((ticket) => (
               <li
                 key={ticket.id}
                 className="flex flex-col gap-1 rounded-2xl glass-medium p-4"

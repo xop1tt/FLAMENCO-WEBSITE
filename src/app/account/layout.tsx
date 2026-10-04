@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { AccountNav } from "@/components/AccountNav";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 
 const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
@@ -13,10 +14,13 @@ export default async function AccountLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
+  const session = await getSession();
+  // На /login — только если сессии действительно нет (401). При сбое
+  // backend пользователь не "вышел из аккаунта".
+  if (session.status === "anonymous") {
     redirect("/login");
   }
+  const currentUser = session.status === "authenticated" ? session.user : null;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-12">
@@ -41,7 +45,9 @@ export default async function AccountLayout({
         </p>
       </div>
       <AccountNav />
-      {currentUser.telegram_id === null ? (
+      {currentUser === null ? (
+        <ServiceUnavailableNotice />
+      ) : currentUser.telegram_id === null ? (
         <p className="rounded-2xl glass-medium p-6 text-base leading-relaxed text-[var(--text-secondary)]">
           Привяжите Telegram к аккаунту, чтобы видеть профиль, баланс занятий
           и записи — на сайте пока нет формы для этого, напишите в «💬 Помощь»

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/account";
+import { isServiceFailure } from "@/lib/apiResult";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 import Link from "next/link";
 import { lessonsCount } from "@/lib/format";
 import { GLASS_BUTTON_CLASS, PRIMARY_BUTTON_CLASS } from "@/lib/glass";
@@ -9,15 +12,22 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountProfilePage() {
-  const profile = await getProfile();
+  const result = await getProfile();
 
-  if (!profile) {
+  if (!result.ok && result.error === "unauthorized") {
+    redirect("/login");
+  }
+  if (isServiceFailure(result)) {
+    return <ServiceUnavailableNotice />;
+  }
+  if (!result.ok) {
     return (
       <p className="text-[var(--text-secondary)]">
         Не удалось загрузить профиль. Попробуйте обновить страницу позже.
       </p>
     );
   }
+  const profile = result.data;
 
   return (
     <div className="flex flex-col gap-6">

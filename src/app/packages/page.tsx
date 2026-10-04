@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getPackages } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { PackagesGrid } from "@/components/PackagesGrid";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 
 export const metadata: Metadata = {
   title: "Абонементы",
@@ -46,7 +47,14 @@ export default async function PackagesPage({
           заново для каждой записи не придётся.
         </p>
       )}
-      <PackagesGrid packages={packages} isAuthenticated={currentUser !== null} />
+      {packages.ok ? (
+        <PackagesGrid
+          packages={packages.data}
+          isAuthenticated={currentUser !== null}
+        />
+      ) : (
+        <ServiceUnavailableNotice />
+      )}
     </div>
   );
 }

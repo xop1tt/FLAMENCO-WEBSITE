@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { requestJson, type ApiResult } from "./apiResult";
 
 /**
  * Личный кабинет (Stage 5): профиль, баланс, мои занятия, поддержка.
@@ -10,25 +11,16 @@ import { cookies } from "next/headers";
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 const SESSION_COOKIE_NAME = "session";
 
-async function fetchWithSession<T>(path: string): Promise<T | null> {
+async function fetchWithSession<T>(path: string): Promise<ApiResult<T>> {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME);
   if (!session) {
-    return null;
+    return { ok: false, error: "unauthorized", status: null };
   }
-  try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { cookie: `${SESSION_COOKIE_NAME}=${session.value}` },
-      cache: "no-store",
-    });
-    if (!response.ok) {
-      return null;
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    console.error(`Account API request failed: ${path}`, error);
-    return null;
-  }
+  return requestJson<T>(`${API_BASE_URL}${path}`, {
+    headers: { cookie: `${SESSION_COOKIE_NAME}=${session.value}` },
+    cache: "no-store",
+  });
 }
 
 export type Profile = {
@@ -69,18 +61,20 @@ export type PaymentHistoryItem = {
   created_at: string;
 };
 
-export async function getProfile(): Promise<Profile | null> {
+// Ошибка — `ApiResult` с причиной, а не `null`/`[]`: пустой список и
+// "не удалось загрузить" страница показывает по-разному.
+export function getProfile(): Promise<ApiResult<Profile>> {
   return fetchWithSession<Profile>("/api/users/me/profile");
 }
 
-export async function getMyBookings(): Promise<UserBooking[]> {
-  return (await fetchWithSession<UserBooking[]>("/api/bookings/me")) ?? [];
+export function getMyBookings(): Promise<ApiResult<UserBooking[]>> {
+  return fetchWithSession<UserBooking[]>("/api/bookings/me");
 }
 
-export async function getMySupportTickets(): Promise<SupportTicket[]> {
-  return (await fetchWithSession<SupportTicket[]>("/api/support/me")) ?? [];
+export function getMySupportTickets(): Promise<ApiResult<SupportTicket[]>> {
+  return fetchWithSession<SupportTicket[]>("/api/support/me");
 }
 
-export async function getMyPayments(): Promise<PaymentHistoryItem[]> {
-  return (await fetchWithSession<PaymentHistoryItem[]>("/api/payments/me")) ?? [];
+export function getMyPayments(): Promise<ApiResult<PaymentHistoryItem[]>> {
+  return fetchWithSession<PaymentHistoryItem[]>("/api/payments/me");
 }

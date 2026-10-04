@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { getBookingRules, getSchedule, isBookable } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 import { getDirections } from "@/lib/directions";
 import { CONTACTS } from "@/lib/contacts";
 import { formatClassDateTime } from "@/lib/format";
@@ -50,7 +51,7 @@ const SCENES: SceneLink[] = [
 // слой можно размывать в переходе (только не стеклянные блоки: blur
 // родителя ломает backdrop-filter стекла внутри него).
 export default async function HomePage() {
-  const [allSlots, directions, currentUser, rules] = await Promise.all([
+  const [scheduleResult, directions, currentUser, rules] = await Promise.all([
     getSchedule(),
     getDirections(),
     getCurrentUser(),
@@ -58,6 +59,7 @@ export default async function HomePage() {
   ]);
   // Как в разделе «Записаться» бота: только занятия, на которые можно
   // записаться.
+  const allSlots = scheduleResult.ok ? scheduleResult.data : [];
   const schedule = allSlots.filter(isBookable);
   const upcoming = schedule.slice(0, 4);
   const nextClass = schedule[0];
@@ -196,12 +198,16 @@ export default async function HomePage() {
             </h2>
           </div>
           <div data-layer data-depth="1.1">
-            <BookableScheduleList
-              slots={upcoming}
-              isAuthenticated={currentUser !== null}
-              classKey={null}
-              cancellationDeadlineHours={rules.cancellation_deadline_hours}
-            />
+            {scheduleResult.ok ? (
+              <BookableScheduleList
+                slots={upcoming}
+                isAuthenticated={currentUser !== null}
+                classKey={null}
+                cancellationDeadlineHours={rules.cancellation_deadline_hours}
+              />
+            ) : (
+              <ServiceUnavailableNotice />
+            )}
           </div>
           {schedule.length > upcoming.length && (
             <div data-layer data-depth="1.3" className="mt-6 flex justify-center">

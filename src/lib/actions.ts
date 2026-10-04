@@ -2,9 +2,29 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { SERVICE_UNAVAILABLE_MESSAGE } from "./apiResult";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 const SESSION_COOKIE_NAME = "session";
+
+// Понятная пользователю причина отказа: при 5xx (в том числе 503 «БД
+// недоступна») — общее «сервис временно недоступен», а не технический
+// detail backend; при 4xx — detail backend (слот занят, нет занятий на
+// балансе и т.п.), он уже сформулирован для пользователя.
+async function failureMessage(response: Response, fallback: string): Promise<string> {
+  if (response.status >= 500) {
+    return SERVICE_UNAVAILABLE_MESSAGE;
+  }
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    if (typeof body.detail === "string" && body.detail) {
+      return body.detail;
+    }
+  } catch {
+    // используем сообщение по умолчанию
+  }
+  return fallback;
+}
 
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
@@ -52,11 +72,19 @@ export async function submitSupportMessageAction(
     });
   } catch (error) {
     console.error("Support submission request failed", error);
-    redirect("/account/support?error=network");
+    redirect("/account/support?error=unavailable");
   }
 
+  if (response.status === 401) {
+    redirect("/login");
+  }
   if (!response.ok) {
-    const reason = response.status === 429 ? "rate_limited" : "failed";
+    const reason =
+      response.status === 429
+        ? "rate_limited"
+        : response.status >= 500
+          ? "unavailable"
+          : "failed";
     redirect(`/account/support?error=${reason}`);
   }
 
@@ -105,7 +133,7 @@ export async function bookClassAction(formData: FormData): Promise<void> {
     console.error("Booking request failed", error);
     redirect(
       scheduleRedirectUrl(classKey, {
-        book_error: "Не удалось связаться с сервером. Попробуйте ещё раз.",
+        book_error: SERVICE_UNAVAILABLE_MESSAGE,
       }),
     );
   }
@@ -115,17 +143,10 @@ export async function bookClassAction(formData: FormData): Promise<void> {
   }
 
   if (!response.ok) {
-    // Backend уже формулирует понятные причины (слот занят/закрыт, не
-    // привязан Telegram и т.д.) — переиспользуем их вместо своего перевода.
-    let detail = "Не удалось записаться. Попробуйте ещё раз позже.";
-    try {
-      const body = (await response.json()) as { detail?: string };
-      if (body.detail) {
-        detail = body.detail;
-      }
-    } catch {
-      // используем сообщение по умолчанию
-    }
+    const detail = await failureMessage(
+      response,
+      "Не удалось записаться. Попробуйте ещё раз позже.",
+    );
     redirect(scheduleRedirectUrl(classKey, { book_error: detail }));
   }
 
@@ -160,7 +181,7 @@ export async function cancelBookingAction(formData: FormData): Promise<void> {
     console.error("Booking cancellation request failed", error);
     redirect(
       "/account/bookings?cancel_error=" +
-        encodeURIComponent("Не удалось связаться с сервером. Попробуйте ещё раз."),
+        encodeURIComponent(SERVICE_UNAVAILABLE_MESSAGE),
     );
   }
 
@@ -169,17 +190,10 @@ export async function cancelBookingAction(formData: FormData): Promise<void> {
   }
 
   if (!response.ok) {
-    // Backend уже формулирует понятную причину (дедлайн отмены истёк,
-    // запись не найдена) — переиспользуем её вместо своего перевода.
-    let detail = "Не удалось отменить запись. Попробуйте ещё раз позже.";
-    try {
-      const body = (await response.json()) as { detail?: string };
-      if (body.detail) {
-        detail = body.detail;
-      }
-    } catch {
-      // используем сообщение по умолчанию
-    }
+    const detail = await failureMessage(
+      response,
+      "Не удалось отменить запись. Попробуйте ещё раз позже.",
+    );
     redirect(`/account/bookings?cancel_error=${encodeURIComponent(detail)}`);
   }
 
@@ -209,7 +223,7 @@ export async function startCheckoutAction(formData: FormData): Promise<void> {
     console.error("Checkout request failed", error);
     redirect(
       "/packages?checkout_error=" +
-        encodeURIComponent("Не удалось связаться с сервером. Попробуйте ещё раз."),
+        encodeURIComponent(SERVICE_UNAVAILABLE_MESSAGE),
     );
   }
 
@@ -218,17 +232,11 @@ export async function startCheckoutAction(formData: FormData): Promise<void> {
   }
 
   if (!response.ok) {
-    // Backend уже формулирует понятную причину (ЮKassa не настроена, пакет
-    // не найден и т.д.) — переиспользуем её вместо своего перевода.
-    let detail = "Не удалось начать оплату. Попробуйте ещё раз позже.";
-    try {
-      const body = (await response.json()) as { detail?: string };
-      if (body.detail) {
-        detail = body.detail;
-      }
-    } catch {
-      // используем сообщение по умолчанию
-    }
+    // 503 «ЮKassa не настроена» — тоже 5xx: пользователю общее сообщение.
+    const detail = await failureMessage(
+      response,
+      "Не удалось начать оплату. Попробуйте ещё раз позже.",
+    );
     redirect(`/packages?checkout_error=${encodeURIComponent(detail)}`);
   }
 
@@ -243,20 +251,36 @@ export async function startCheckoutAction(formData: FormData): Promise<void> {
 }
 
 export async function checkPaymentAction(formData: FormData): Promise<void> {
-  const paymentId = formData.get("payment_id");
+  const paymentId = Number(formData.get("payment_id"));
 
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME);
   if (!session) {
     redirect("/login");
   }
+  if (!Number.isInteger(paymentId) || paymentId <= 0) {
+    redirect("/account/payments");
+  }
 
+  let response: Response;
   try {
-    await fetch(`${API_BASE_URL}/api/payments/${paymentId}/check`, {
+    response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}/check`, {
       headers: { cookie: `${SESSION_COOKIE_NAME}=${session.value}` },
     });
   } catch (error) {
     console.error("Payment status check failed", error);
+    redirect(
+      `/account/payments?checkout_error=${encodeURIComponent(SERVICE_UNAVAILABLE_MESSAGE)}`,
+    );
+  }
+
+  if (response.status === 401) {
+    redirect("/login");
+  }
+  if (response.status >= 500) {
+    redirect(
+      `/account/payments?checkout_error=${encodeURIComponent(SERVICE_UNAVAILABLE_MESSAGE)}`,
+    );
   }
 
   redirect("/account/payments");

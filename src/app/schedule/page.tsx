@@ -6,6 +6,7 @@ import { getProfile } from "@/lib/account";
 import { getCurrentUser } from "@/lib/auth";
 import { balanceLabel, formatClassDateTime, hoursLabel } from "@/lib/format";
 import { BookableScheduleList } from "@/components/BookableScheduleList";
+import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 import { getDirections } from "@/lib/directions";
 
 // «Записаться» — как раздел Telegram-бота: ближайшие свободные занятия с
@@ -44,9 +45,11 @@ export default async function SchedulePage({
     getCurrentUser(),
     getBookingRules(),
   ]);
-  const profile = currentUser?.telegram_id ? await getProfile() : null;
+  const profileResult = currentUser?.telegram_id ? await getProfile() : null;
+  const profile = profileResult?.ok ? profileResult.data : null;
+  const slots = schedule.ok ? schedule.data : [];
   const bookedSlot = booked
-    ? schedule.find((slot) => String(slot.id) === booked)
+    ? slots.find((slot) => String(slot.id) === booked)
     : undefined;
 
   return (
@@ -92,12 +95,17 @@ export default async function SchedulePage({
         ))}
       </div>
 
-      <BookableScheduleList
-        slots={schedule}
-        isAuthenticated={currentUser !== null}
-        classKey={activeDirection?.key ?? null}
-        cancellationDeadlineHours={rules.cancellation_deadline_hours}
-      />
+      {/* Расписание не загрузилось — не «свободных занятий нет». */}
+      {schedule.ok ? (
+        <BookableScheduleList
+          slots={slots}
+          isAuthenticated={currentUser !== null}
+          classKey={activeDirection?.key ?? null}
+          cancellationDeadlineHours={rules.cancellation_deadline_hours}
+        />
+      ) : (
+        <ServiceUnavailableNotice />
+      )}
     </div>
   );
 }
