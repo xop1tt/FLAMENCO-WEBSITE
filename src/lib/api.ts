@@ -1,5 +1,5 @@
 /**
- * Тонкий клиент к backend API (`src/flamenco_bot/api`).
+ * Тонкий клиент к backend API (`flamenco-studio-bot/src/flamenco_bot/api`).
  *
  * Запросы выполняются на сервере Next.js (в серверных компонентах), а не в
  * браузере — так фронтенд не дублирует бизнес-логику и не требует CORS на

@@ -15,7 +15,7 @@ const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
 // Расписание и абонементы меняются (места заполняются, цены может менять
 // студия), поэтому страницу нельзя кэшировать статически на этапе сборки —
-// см. frontend/README.md.
+// см. README.md.
 export const dynamic = "force-dynamic";
 
 const WHY_US = [

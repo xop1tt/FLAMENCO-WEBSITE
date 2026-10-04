@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 /**
  * Поля, которые Telegram Login Widget передаёт в колбэк после входа.
  * Совпадает с `TelegramAuthRequest` на backend
- * (`src/flamenco_bot/api/schemas.py`) — подпись (`hash`) проверяется там,
+ * (`flamenco-studio-bot/src/flamenco_bot/api/schemas.py`) — подпись (`hash`) проверяется там,
  * фронтенд ей не доверяет и ничего сам не проверяет.
  */
 type TelegramWidgetUser = {

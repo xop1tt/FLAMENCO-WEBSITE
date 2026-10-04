@@ -1,9 +1,19 @@
 # Flamenco Studio — публичный сайт
 
-Next.js (App Router) + TypeScript + Tailwind CSS. Второй интерфейс к тому же
-backend API, что описан в корневом `README.md` — сайт не хранит бизнес-данные
-и не дублирует бизнес-логику бота, только отображает то, что отдаёт
-`src/flamenco_bot/api` (см. корневой `WEBSITE_PLAN.md`).
+Next.js (App Router) + TypeScript + Tailwind CSS. Второй интерфейс (рядом с
+Telegram-ботом) к одному и тому же backend: сайт не хранит бизнес-данные и
+не дублирует бизнес-логику бота, только отображает то, что отдаёт веб-API.
+
+Это самостоятельный проект со своим git-репозиторием. Backend — Telegram-бот,
+веб-API (FastAPI, `src/flamenco_bot/api`), миграции и PostgreSQL — живёт в
+отдельном репозитории `flamenco-studio-bot` (локально — папка `TG BOT`
+рядом с этой); там же `README.md` и `WEBSITE_PLAN.md` с общей архитектурой.
+Единственная связь между проектами — HTTP-запросы сайта к API
+(`API_BASE_URL`):
+
+```text
+FLAMENCO WEBSITE (Next.js) ──HTTP──▶ FastAPI API ──▶ PostgreSQL ◀── Telegram-бот
+```
 
 Реализовано: публичные страницы без авторизации (Stage 3 — главная,
 расписание, направления, абонементы, контакты), вход через Telegram
@@ -17,13 +27,10 @@ checkout отвечает 503 — весь остальной код уже го
 
 ## Запуск
 
-Проще всего — из корня репозитория одной командой `./run.sh site` (API +
-сайт) или `./run.sh` (ещё и бот), см. корневой `README.md`. Вручную:
-
 ```bash
 npm install
 cp .env.example .env.local   # укажите API_BASE_URL и NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
-npm run dev
+npm run dev                  # http://localhost:3000
 ```
 
 На `npm run dev` (`localhost`) виджет **всегда** покажет «Bot domain
@@ -37,19 +44,22 @@ invalid» — это не баг, а намеренное ограничение
 HTTP-запросами с подписанным payload — см. коммиты Stage 4/5.
 
 Откройте http://localhost:3000. По умолчанию сайт обращается к backend API
-на `http://127.0.0.1:8000` — поднимите его отдельно:
+на `http://127.0.0.1:8000` — поднимите его отдельно, в backend-проекте:
 
 ```bash
-# из корня репозитория, в виртуальном окружении backend
-python -m flamenco_bot.api
+cd "../TG BOT"
+./run.sh api     # только API (или ./run.sh — API + бот)
 ```
+
+Без запущенного API сайт тоже стартует, но расписание и абонементы будут
+пустыми, а вход и личный кабинет — недоступны.
 
 ## Переменные окружения
 
 | Переменная | Обязательно | Назначение |
 |---|:---:|---|
 | `API_BASE_URL` | Нет (по умолчанию `http://127.0.0.1:8000`) | Базовый URL backend API. Запросы идут с сервера Next.js (серверные компоненты), а не из браузера — переменная намеренно без префикса `NEXT_PUBLIC_`, чтобы не попасть в клиентский бандл. |
-| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Для `/login` | Публичный `@username` бота для Telegram Login Widget (не секрет). Инлайнится в клиентский бандл на этапе `next build` — в Docker это build arg, а не runtime-переменная (см. корневой `compose.yaml`). |
+| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Для `/login` | Публичный `@username` бота для Telegram Login Widget (не секрет). Инлайнится в клиентский бандл на этапе `next build` — в Docker это build arg, а не runtime-переменная (см. `compose.yaml`). |
 
 ## Данные и кэширование
 
@@ -96,7 +106,7 @@ src/
     │                 # все переиспользуют сообщения об ошибках backend'а
     │                 # вместо своего перевода
     ├── directions.ts # маркетинговые описания направлений (labels совпадают
-    │                 # с CLASS_LABELS в src/flamenco_bot/class_catalog.py)
+    │                 # с CLASS_LABELS в backend: src/flamenco_bot/class_catalog.py)
     └── format.ts      # форматирование дат/времени
 ```
 
@@ -142,9 +152,9 @@ backend через `rewrites()` в `next.config.ts` — отдельного COR
 
 ## Оплата (ЮKassa) — подготовлено, но не подключено
 
-Весь путь готов и покрыт тестами (`tests/unit/test_api_payments.py`), но
-намеренно не принимает реальные платежи: на backend пуст
-`WEB_YOOKASSA_RETURN_URL` (см. корневой `env.example`), поэтому
+Весь путь готов и покрыт тестами backend (`tests/unit/test_api_payments.py`
+в backend-проекте), но намеренно не принимает реальные платежи: на backend пуст
+`WEB_YOOKASSA_RETURN_URL` (см. `env.example` backend-проекта), поэтому
 `POST /api/payments/checkout` отвечает `503 "ЮKassa не настроена"` — та же
 кнопка «Купить» и та же страница `/account/payments` уже работают с этим
 статусом (показывают понятную ошибку, не падают).
@@ -159,12 +169,12 @@ backend через `rewrites()` в `next.config.ts` — отдельного COR
   кнопке.
 
 Что нужно сделать, чтобы включить реальные платежи:
-1. Указать `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY` в `.env` (если ещё не
+1. Указать `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY` в `.env` backend'а (если ещё не
    указаны для бота — используется один и тот же магазин).
 2. Указать `WEB_YOOKASSA_RETURN_URL` — адрес сайта, куда ЮKassa вернёт
    пользователя после оплаты, например
    `https://your-domain.example/account/payments`.
-3. Перезапустить `api` (или весь `docker compose up -d --build`).
+3. Перезапустить `api` в backend-проекте (`docker compose up -d --build` там).
 
 Фронтенд менять не нужно — он уже полностью готов к этому переключению.
 
@@ -177,7 +187,7 @@ backend через `rewrites()` в `next.config.ts` — отдельного COR
   (email/пароль) на backend есть, но на сайте для них пока нет формы —
   добавить, если продукту нужен вход без Telegram.
 - Отмена записи — нет ни UI, ни backend-эндпоинта (в боте такого тоже нет,
-  правило не определено — см. `WEBSITE_PLAN.md`, раздел 14: "не придумывать
+  правило не определено — см. `WEBSITE_PLAN.md` backend-проекта, раздел 14: "не придумывать
   новые правила самостоятельно"). Привязка/отвязка Telegram из кабинета —
   тоже нет UI, хотя у `/api/auth/me/telegram` есть backend.
 
@@ -186,5 +196,23 @@ backend через `rewrites()` в `next.config.ts` — отдельного COR
 Это служебные файлы Next.js, не трогайте без необходимости:
 `AGENTS.md`, `CLAUDE.md` (переадресует на `AGENTS.md`) — автоматически
 создаются/обновляются самим `next dev`/`create-next-app` и описывают
-особенности именно этой версии Next.js, отдельно от корневого `CLAUDE.md`
-проекта.
+особенности именно этой версии Next.js, отдельно от `CLAUDE.md`
+backend-проекта.
+
+## Развёртывание (Docker)
+
+`Dockerfile` собирает standalone-образ Next.js, `compose.yaml` запускает его
+как сервис `frontend` (порт 3000 — единственный публичный порт системы, перед
+ним нужен TLS-терминирующий reverse proxy). Сайт обращается к сервису `api`
+backend-проекта по адресу `http://api:8000` через общую docker-сеть
+`flamenco-web`; её создаёт `compose.yaml` backend'а, поэтому порядок такой:
+
+```bash
+# 1. backend (бот + API) — в его каталоге
+docker compose up -d --build
+
+# 2. сайт — в этом каталоге
+cp .env.example .env          # NEXT_PUBLIC_TELEGRAM_BOT_USERNAME для сборки
+docker compose up -d --build
+curl http://localhost:3000/api/health   # проксируется к api
+```

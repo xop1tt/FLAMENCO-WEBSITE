@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 /**
  * Авторизация пользователя сайта (`/api/auth/*` на backend — см.
- * `src/flamenco_bot/api/routers/auth.py`). Сессия — httponly JWT-cookie
+ * `flamenco-studio-bot/src/flamenco_bot/api/routers/auth.py`). Сессия — httponly JWT-cookie
  * `session`, которую подписывает backend; фронтенд её не парсит и не
  * проверяет сам, только пересылает backend'у и спрашивает "кто я".
  */

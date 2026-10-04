@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 /**
  * Личный кабинет (Stage 5): профиль, баланс, мои занятия, поддержка.
- * Все данные — с backend (`src/flamenco_bot/api`), сессия передаётся тем же
+ * Все данные — с backend (`flamenco-studio-bot/src/flamenco_bot/api`), сессия передаётся тем же
  * способом, что и в `lib/auth.ts`: cookie пересылается напрямую backend'у,
  * а не через rewrite (это серверные компоненты, не браузер).
  */

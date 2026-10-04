@@ -1,0 +1,45 @@
+services:
+  # Публичный сайт (Next.js). Единственный сервис системы с портом,
+  # опубликованным на хост — перед ним должен стоять TLS-терминирующий
+  # reverse proxy, сам он слушает только HTTP.
+  #
+  # Backend (бот + веб-API) — отдельный проект со своим compose.yaml. Сайт
+  # обращается к его сервису `api` по имени в общей docker-сети
+  # `flamenco-web`, которую создаёт compose backend'а — поэтому backend
+  # нужно поднять первым.
+  frontend:
+    build:
+      context: .
+      args:
+        # NEXT_PUBLIC_* переменные Next.js встраивает в клиентский бандл на
+        # этапе сборки, а не читает при старте контейнера — поэтому это
+        # build arg, а не environment: ниже. Значение берётся из .env рядом
+        # с этим файлом (см. .env.example).
+        NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME:?Set NEXT_PUBLIC_TELEGRAM_BOT_USERNAME to the bot's public @username}
+    image: flamenco-studio-frontend:local
+    init: true
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:8000
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "3000:3000"
+    networks:
+      - flamenco-web
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  flamenco-web:
+    external: true

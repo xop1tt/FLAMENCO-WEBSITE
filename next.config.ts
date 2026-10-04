@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 
 const nextConfig: NextConfig = {
   // Lean production runtime for Docker: only traced files + a minimal
-  // server.js, no full node_modules copy. See frontend/Dockerfile.
+  // server.js, no full node_modules copy. See Dockerfile.
   output: "standalone",
 
   // Proxies browser requests for /api/* to the backend container on the
