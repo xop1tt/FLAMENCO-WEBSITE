@@ -25,6 +25,8 @@ services:
     restart: unless-stopped
     environment:
       API_BASE_URL: http://api:8000
+      # Тот же пояс, что у backend (STUDIO_TIMEZONE в его .env).
+      STUDIO_TIMEZONE: ${STUDIO_TIMEZONE:-Europe/Moscow}
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
     read_only: true

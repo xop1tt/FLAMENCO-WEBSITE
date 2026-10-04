@@ -2,10 +2,16 @@
 // (flamenco-studio-bot/src/flamenco_bot/presentation.py), чтобы сайт и бот выглядели как два
 // интерфейса одного аккаунта: «Вт 14.10 · 19:00», «Баланс: 3 занятия».
 //
-// Часовой пояс сайта пока Europe/Moscow (бот показывает время без перевода)
-// — выравнивание поясов ждёт решения по часовому поясу студии.
+// Время показывается в часовом поясе студии — та же переменная
+// STUDIO_TIMEZONE и то же значение по умолчанию, что у backend
+// (flamenco_bot/config: Config.STUDIO_TIMEZONE), поэтому один и тот же
+// момент из PostgreSQL выглядит одинаково на сайте и в Telegram-боте.
+// Форматирование выполняется на сервере Next.js; некорректное имя пояса
+// роняет сервер при старте (RangeError), а не показывает неверное время.
 
-const TIME_ZONE = "Europe/Moscow";
+const TIME_ZONE =
+  (typeof process !== "undefined" ? process.env.STUDIO_TIMEZONE?.trim() : "") ||
+  "Europe/Moscow";
 
 const partsFormatter = new Intl.DateTimeFormat("ru-RU", {
   timeZone: TIME_ZONE,
@@ -27,10 +33,10 @@ function zonedParts(date: Date): Record<string, string> {
   );
 }
 
-/** «Вт 14.10 · 19:00»; год — только если он не текущий. */
-export function formatClassDateTime(isoString: string): string {
+/** «Вт 14.10 · 19:00» в поясе студии; год — только если он не текущий. */
+export function formatClassDateTime(isoString: string, now: Date = new Date()): string {
   const parts = zonedParts(new Date(isoString));
-  const currentYear = zonedParts(new Date()).year;
+  const currentYear = zonedParts(now).year;
   const weekday = parts.weekday.charAt(0).toUpperCase() + parts.weekday.slice(1);
   const date =
     parts.year === currentYear
