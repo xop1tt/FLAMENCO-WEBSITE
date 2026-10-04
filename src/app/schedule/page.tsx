@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GLASS_BUTTON_CLASS } from "@/lib/glass";
 import { getBookingRules, getSchedule, type ClassSlot } from "@/lib/api";
-import { getProfile } from "@/lib/account";
+import { getMyBookedSlotIds, getProfile } from "@/lib/account";
 import { getCurrentUser } from "@/lib/auth";
 import { balanceLabel, formatClassDateTime, hoursLabel } from "@/lib/format";
 import { BookableScheduleList } from "@/components/BookableScheduleList";
@@ -45,7 +45,9 @@ export default async function SchedulePage({
     getCurrentUser(),
     getBookingRules(),
   ]);
-  const profileResult = currentUser?.telegram_id ? await getProfile() : null;
+  const [profileResult, bookedSlotIds] = currentUser?.telegram_id
+    ? await Promise.all([getProfile(), getMyBookedSlotIds()])
+    : [null, undefined];
   const profile = profileResult?.ok ? profileResult.data : null;
   const slots = schedule.ok ? schedule.data : [];
   const bookedSlot = booked
@@ -102,6 +104,7 @@ export default async function SchedulePage({
           isAuthenticated={currentUser !== null}
           classKey={activeDirection?.key ?? null}
           cancellationDeadlineHours={rules.cancellation_deadline_hours}
+          bookedSlotIds={bookedSlotIds}
         />
       ) : (
         <ServiceUnavailableNotice />

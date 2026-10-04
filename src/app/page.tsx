@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { getBookingRules, getSchedule, isBookable } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { getMyBookedSlotIds } from "@/lib/account";
 import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 import { getDirections } from "@/lib/directions";
 import { CONTACTS } from "@/lib/contacts";
@@ -59,6 +60,9 @@ export default async function HomePage() {
   ]);
   // Как в разделе «Записаться» бота: только занятия, на которые можно
   // записаться.
+  const bookedSlotIds = currentUser?.telegram_id
+    ? await getMyBookedSlotIds()
+    : undefined;
   const allSlots = scheduleResult.ok ? scheduleResult.data : [];
   const schedule = allSlots.filter(isBookable);
   const upcoming = schedule.slice(0, 4);
@@ -204,6 +208,7 @@ export default async function HomePage() {
                 isAuthenticated={currentUser !== null}
                 classKey={null}
                 cancellationDeadlineHours={rules.cancellation_deadline_hours}
+                bookedSlotIds={bookedSlotIds}
               />
             ) : (
               <ServiceUnavailableNotice />

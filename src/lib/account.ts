@@ -78,3 +78,21 @@ export function getMySupportTickets(): Promise<ApiResult<SupportTicket[]>> {
 export function getMyPayments(): Promise<ApiResult<PaymentHistoryItem[]>> {
   return fetchWithSession<PaymentHistoryItem[]>("/api/payments/me");
 }
+
+/**
+ * Занятия, на которые пользователь уже записан (подтверждённые записи) —
+ * чтобы в расписании показывать «Вы записаны» вместо кнопки «Записаться».
+ * Без сессии или при сбое API — пустой набор: тогда остаётся обычная
+ * кнопка, а повторную запись backend всё равно обработает идемпотентно.
+ */
+export async function getMyBookedSlotIds(): Promise<Set<number>> {
+  const result = await getMyBookings();
+  if (!result.ok) {
+    return new Set();
+  }
+  return new Set(
+    result.data
+      .filter((booking) => booking.booking_status === "confirmed")
+      .map((booking) => booking.slot_id),
+  );
+}

@@ -12,7 +12,12 @@ type Props = {
   // Окно отмены из backend (GET /api/bookings/rules): запись ближе этого
   // срока необратима и, как в боте, требует подтверждения.
   cancellationDeadlineHours: number;
+  // Занятия с подтверждённой записью текущего пользователя
+  // (GET /api/bookings/me) — вместо кнопки показывается «Вы записаны».
+  bookedSlotIds?: ReadonlySet<number>;
 };
+
+const NO_BOOKINGS: ReadonlySet<number> = new Set();
 
 // Те же правила, что в разделе «Записаться» Telegram-бота: показываются
 // только занятия, на которые можно записаться (открытые, с местами).
@@ -21,8 +26,12 @@ export function BookableScheduleList({
   isAuthenticated,
   classKey,
   cancellationDeadlineHours,
+  bookedSlotIds = NO_BOOKINGS,
 }: Props) {
-  const bookable = slots.filter(isBookable);
+  // Своё занятие показываем, даже если свободных мест уже не осталось.
+  const bookable = slots.filter(
+    (slot) => isBookable(slot) || (slot.status === "open" && bookedSlotIds.has(slot.id)),
+  );
   if (bookable.length === 0) {
     return <EmptyScheduleNotice />;
   }
@@ -38,6 +47,7 @@ export function BookableScheduleList({
           classKey={classKey}
           irreversible={new Date(slot.starts_at).getTime() < lateFrom}
           cancellationDeadlineHours={cancellationDeadlineHours}
+          booked={bookedSlotIds.has(slot.id)}
         />
       ))}
     </ul>
@@ -56,12 +66,14 @@ function BookableScheduleCard({
   classKey,
   irreversible,
   cancellationDeadlineHours,
+  booked,
 }: {
   slot: ClassSlot;
   isAuthenticated: boolean;
   classKey: string | null;
   irreversible: boolean;
   cancellationDeadlineHours: number;
+  booked: boolean;
 }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] glass-medium glass-specular p-5">
@@ -75,7 +87,7 @@ function BookableScheduleCard({
         <div className="text-sm font-medium text-[var(--primary)]">
           Свободно {placesLabel(slot.remaining)}
         </div>
-        {irreversible && (
+        {irreversible && !booked && (
           <div className="text-xs text-[var(--text-secondary)]">
             До начала меньше {hoursLabel(cancellationDeadlineHours)} — отменить
             запись будет нельзя.
@@ -83,7 +95,20 @@ function BookableScheduleCard({
         )}
       </div>
 
-      {isAuthenticated ? (
+      {booked ? (
+        // Отмена — в «Мои занятия», с её правилами и подтверждением.
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="rounded-full bg-[var(--success-bg)] px-4 py-2 text-sm font-medium text-[var(--success-text)]">
+            Вы записаны ✓
+          </span>
+          <Link
+            href="/account/bookings"
+            className="text-xs font-medium text-[var(--primary)] underline-offset-4 hover:underline"
+          >
+            Мои занятия
+          </Link>
+        </div>
+      ) : isAuthenticated ? (
         <form action={bookClassAction}>
           <input type="hidden" name="slot_id" value={slot.id} />
           {classKey && <input type="hidden" name="class_key" value={classKey} />}
