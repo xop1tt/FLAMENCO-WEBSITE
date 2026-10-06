@@ -155,7 +155,7 @@ export default async function HomePage() {
 
       <Scene id="about" labelledBy="about-title">
         <div className="mx-auto w-full max-w-5xl px-4">
-          <div data-layer data-depth="1" className="glass-medium glass-float rounded-[32px] px-6 py-8 sm:p-12">
+          <div data-layer data-depth="1" className="glass-medium glass-float rounded-[32px] px-5 py-7 sm:px-10 sm:py-9">
             <div data-layer data-depth="0.05" data-blur className="mb-3.5 flex flex-col items-center gap-3 text-center">
               <span className="eyebrow">О нас</span>
               <h2 id="about-title" className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
@@ -166,24 +166,24 @@ export default async function HomePage() {
               data-layer
               data-depth="0.08"
               data-blur
-              className="mx-auto mb-7 max-w-2xl text-center text-base leading-relaxed text-[var(--text-secondary)]"
+              className="mx-auto mb-6 max-w-2xl text-center text-base leading-relaxed text-[var(--text-secondary)] sm:mb-8"
             >
               Mirada Studio — пространство для тех, кто хочет танцевать
               фламенко в своём темпе: от первого урока до сцены.
               Онлайн-запись, абонементы и личный кабинет — всё в одном
               месте, через тот же Telegram-аккаунт, что и в боте студии.
             </p>
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--glass-border)]">
               {WHY_US.map((item, i) => (
                 <div
                   key={item.text}
                   data-layer
                   data-depth={(0.1 + i * 0.04).toFixed(2)}
                   data-blur
-                  className="flex flex-col items-center gap-3 text-center"
+                  className="flex items-center gap-4 text-left sm:flex-col sm:gap-3 sm:px-6 sm:text-center"
                 >
                   <WhyUsIcon variant={item.icon} />
-                  <p className="text-base leading-relaxed text-[var(--text-secondary)]">
+                  <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] sm:text-base">
                     {item.text}
                   </p>
                 </div>
@@ -297,12 +297,12 @@ function Scene({
 
 // Иконки для "Почему мы?" — разные и по теме каждого пункта (группы,
 // уровни, расписание). Реальных фото студии/преподавателей в проекте нет,
-// выдумывать их нельзя (CLAUDE.md §27). Подложка — маленькая стеклянная
-// "линза" того же материала, что и панель вокруг.
+// выдумывать их нельзя (CLAUDE.md §27). Подложка — "вдавленная" линза
+// (glass-quiet) в материале панели, а не второй лист стекла поверх неё.
 function WhyUsIcon({ variant }: { variant: "group" | "levels" | "calendar" }) {
   return (
     <div
-      className="glass-subtle flex h-16 w-16 items-center justify-center rounded-2xl text-[var(--primary)]"
+      className="glass-quiet flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] text-[var(--primary)]"
       aria-hidden="true"
     >
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

@@ -50,12 +50,14 @@ export function MobileNav({
         aria-label={open ? "Закрыть меню" : "Открыть меню"}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="glass-subtle glass-interactive flex h-10 w-10 items-center justify-center rounded-full text-lg text-[var(--text-primary)]"
+        className="glass-subtle glass-interactive flex h-10 w-10 items-center justify-center rounded-full text-[var(--text-primary)]"
       >
-        {open ? "✕" : "☰"}
+        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
+          {open ? <path d="M5 5l10 10M15 5 5 15" /> : <path d="M3.5 6.5h13M3.5 13.5h13" />}
+        </svg>
       </button>
       {open && (
-        <div className="glass-dense absolute right-0 top-full mt-2 flex w-56 flex-col items-stretch gap-1 rounded-2xl p-3">
+        <div className="glass-dense absolute right-0 top-full mt-3 flex w-60 flex-col items-stretch gap-1 rounded-[26px] p-2.5">
           {links.map((link) => (
             <NavLink key={link.href} href={link.href}>
               {link.label}

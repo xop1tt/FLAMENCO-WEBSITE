@@ -35,7 +35,7 @@ export default async function AccountPaymentsPage({
   return (
     <div className="flex flex-col gap-6">
       {checkoutError && (
-        <p className="rounded-md bg-[var(--danger-bg)] p-3 text-sm text-[var(--danger-text)]">
+        <p className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
           {checkoutError === "no_confirmation_url"
             ? "Платёж создан, но ссылка на оплату недоступна. Проверьте статус ниже чуть позже."
             : checkoutError}
@@ -43,13 +43,13 @@ export default async function AccountPaymentsPage({
       )}
 
       <section>
-        <h2 className="mb-4 text-xl font-semibold">История платежей</h2>
+        <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">История платежей</h2>
         {!payments.ok ? (
           <ServiceUnavailableNotice />
         ) : payments.data.length === 0 ? (
           <p className="text-[var(--text-secondary)]">
             Платежей пока нет. Выбрать абонемент можно на{" "}
-            <Link href="/packages" className="text-[var(--primary)] hover:underline">
+            <Link href="/packages" className="text-[var(--primary-text)] hover:underline">
               странице абонементов
             </Link>
             .
@@ -68,7 +68,7 @@ function PaymentList({ payments }: { payments: PaymentHistoryItem[] }) {
       {payments.map((payment) => (
         <li
           key={payment.id}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl glass-medium p-4"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] glass-medium p-4"
         >
           <div className="flex flex-col gap-1">
             <span className="font-medium">{payment.package_title}</span>

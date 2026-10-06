@@ -31,8 +31,8 @@ export default async function AccountProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-2xl glass-medium p-6">
-        <h2 className="mb-4 text-xl font-semibold">Профиль</h2>
+      <section className="rounded-[24px] glass-medium p-6">
+        <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">Профиль</h2>
         <dl className="flex flex-col gap-3">
           <Row label="Имя" value={profile.user_name} />
           <Row label="Телефон" value={profile.phone ?? "не указан"} />
@@ -42,10 +42,10 @@ export default async function AccountProfilePage() {
         </p>
       </section>
 
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl glass-medium p-6">
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-[24px] glass-medium p-6">
         <div>
-          <h2 className="mb-1 text-xl font-semibold">Баланс</h2>
-          <p className="text-2xl font-bold text-[var(--primary)]">
+          <h2 className="mb-1 font-heading text-xl font-bold tracking-tight">Баланс</h2>
+          <p className="text-2xl font-bold text-[var(--primary-text)]">
             {lessonsCount(profile.lesson_credits)}
           </p>
         </div>

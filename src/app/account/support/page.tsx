@@ -34,20 +34,20 @@ export default async function AccountSupportPage({
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="rounded-2xl glass-medium p-6">
-        <h2 className="mb-1 text-xl font-semibold">Помощь</h2>
+      <section className="rounded-[24px] glass-medium p-6">
+        <h2 className="mb-1 font-heading text-xl font-bold tracking-tight">Помощь</h2>
         <p className="mb-4 text-sm text-[var(--text-secondary)]">
           Напишите вопрос — его получат администраторы студии. Ответ придёт в
           Telegram-бот студии и появится в списке ниже.
         </p>
         {submitted && (
-          <p className="mb-4 rounded-md bg-[var(--success-bg)] p-3 text-sm text-[var(--success-text)]">
+          <p className="mb-4 rounded-2xl border border-[color-mix(in_srgb,var(--success-text)_22%,transparent)] bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success-text)]">
             Сообщение отправлено. Ответ придёт в Telegram-бот студии и
             появится в списке ниже.
           </p>
         )}
         {error && (
-          <p className="mb-4 rounded-md bg-[var(--danger-bg)] p-3 text-sm text-[var(--danger-text)]">
+          <p className="mb-4 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
             {ERROR_MESSAGES[error] ?? ERROR_MESSAGES.failed}
           </p>
         )}
@@ -62,7 +62,7 @@ export default async function AccountSupportPage({
             maxLength={2000}
             rows={4}
             placeholder="Ваш вопрос…"
-            className="rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-3 text-base focus:border-[var(--primary)] focus:outline-none"
+            className="glass-quiet rounded-2xl p-3 text-base transition-[border-color] focus:border-[var(--primary)] focus:outline-none focus:ring-3 focus:ring-[color-mix(in_srgb,var(--primary)_28%,transparent)]"
           />
           <button
             type="submit"
@@ -74,7 +74,7 @@ export default async function AccountSupportPage({
       </section>
 
       <section>
-        <h2 className="mb-4 text-xl font-semibold">Мои обращения</h2>
+        <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">Мои обращения</h2>
         {!tickets.ok ? (
           <ServiceUnavailableNotice />
         ) : tickets.data.length === 0 ? (
@@ -84,7 +84,7 @@ export default async function AccountSupportPage({
             {tickets.data.map((ticket) => (
               <li
                 key={ticket.id}
-                className="flex flex-col gap-1 rounded-2xl glass-medium p-4"
+                className="flex flex-col gap-1 rounded-[24px] glass-medium p-4"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span className="font-medium">Обращение №{ticket.id}</span>

@@ -21,7 +21,7 @@ export function NavLink({
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={`${NAV_ITEM_CLASS} ${
-        isActive ? "text-[var(--primary)]" : "text-[var(--text-secondary)] hover:text-[var(--primary)]"
+        isActive ? "text-[var(--primary-text)]" : "text-[var(--text-secondary)] hover:text-[var(--primary-text)]"
       }`}
     >
       {children}

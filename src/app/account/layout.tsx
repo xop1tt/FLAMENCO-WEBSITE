@@ -25,7 +25,7 @@ export default async function AccountLayout({
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-12">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">Личный кабинет</h1>
+        <h1 className="font-heading text-4xl font-bold tracking-tight">Личный кабинет</h1>
         <p className="text-sm text-[var(--text-secondary)]">
           Тот же аккаунт, что в Telegram-боте студии
           {TELEGRAM_BOT_USERNAME ? (
@@ -35,7 +35,7 @@ export default async function AccountLayout({
                 href={`https://t.me/${TELEGRAM_BOT_USERNAME}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-[var(--primary)] underline-offset-4 hover:underline"
+                className="font-medium text-[var(--primary-text)] underline-offset-4 hover:underline"
               >
                 @{TELEGRAM_BOT_USERNAME}
               </a>
@@ -48,7 +48,7 @@ export default async function AccountLayout({
       {currentUser === null ? (
         <ServiceUnavailableNotice />
       ) : currentUser.telegram_id === null ? (
-        <p className="rounded-2xl glass-medium p-6 text-base leading-relaxed text-[var(--text-secondary)]">
+        <p className="rounded-[24px] glass-medium p-6 text-base leading-relaxed text-[var(--text-secondary)]">
           Привяжите Telegram к аккаунту, чтобы видеть профиль, баланс занятий
           и записи — на сайте пока нет формы для этого, напишите в «💬 Помощь»
           в Telegram-боте студии.

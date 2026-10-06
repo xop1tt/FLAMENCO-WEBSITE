@@ -45,13 +45,13 @@ export default async function AccountBookingsPage({
   const notices = (
     <>
       {cancelled && (
-        <p className="rounded-md bg-[var(--success-bg)] p-3 text-sm text-[var(--success-text)]">
+        <p className="rounded-2xl border border-[color-mix(in_srgb,var(--success-text)_22%,transparent)] bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success-text)]">
           Запись отменена. Занятие вернулось на баланс
           {balance ? ` — ${balance}` : ""}.
         </p>
       )}
       {cancelError && (
-        <p className="rounded-md bg-[var(--danger-bg)] p-3 text-sm text-[var(--danger-text)]">
+        <p className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
           {cancelError}
         </p>
       )}
@@ -76,9 +76,9 @@ export default async function AccountBookingsPage({
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-xl font-semibold">Предстоящие</h2>
+          <h2 className="font-heading text-xl font-bold tracking-tight">Предстоящие</h2>
           {balance && (
-            <span className="text-sm font-medium text-[var(--primary)]">{balance}</span>
+            <span className="text-sm font-medium text-[var(--primary-text)]">{balance}</span>
           )}
         </div>
         {upcoming.length === 0 ? (
@@ -123,7 +123,7 @@ export default async function AccountBookingsPage({
       </section>
 
       <section>
-        <h2 className="mb-4 text-xl font-semibold">История</h2>
+        <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">История</h2>
         {history.length === 0 ? (
           <p className="text-[var(--text-secondary)]">Пока нет истории занятий.</p>
         ) : (
@@ -131,7 +131,7 @@ export default async function AccountBookingsPage({
             {history.map((booking) => (
               <li
                 key={booking.id}
-                className="flex flex-wrap items-baseline justify-between gap-2 rounded-2xl glass-medium p-4"
+                className="flex flex-wrap items-baseline justify-between gap-2 rounded-[24px] glass-medium p-4"
               >
                 <span className="font-medium">{booking.class_label}</span>
                 <span className="text-sm text-[var(--text-secondary)]">
@@ -174,7 +174,7 @@ function UpcomingBooking({
   rebookCooldownHours: number;
 }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl glass-medium p-4">
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] glass-medium p-4">
       <div className="flex flex-col gap-1">
         <span className="font-medium">{booking.class_label}</span>
         <span className="text-sm text-[var(--text-secondary)]">

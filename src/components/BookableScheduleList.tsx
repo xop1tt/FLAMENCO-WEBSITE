@@ -84,7 +84,7 @@ function BookableScheduleCard({
             {formatClassDateTime(slot.starts_at)}
           </span>
         </div>
-        <div className="text-sm font-medium text-[var(--primary)]">
+        <div className="text-sm font-medium text-[var(--primary-text)]">
           Свободно {placesLabel(slot.remaining)}
         </div>
         {irreversible && !booked && (
@@ -103,7 +103,7 @@ function BookableScheduleCard({
           </span>
           <Link
             href="/account/bookings"
-            className="text-xs font-medium text-[var(--primary)] underline-offset-4 hover:underline"
+            className="text-xs font-medium text-[var(--primary-text)] underline-offset-4 hover:underline"
           >
             Мои занятия
           </Link>

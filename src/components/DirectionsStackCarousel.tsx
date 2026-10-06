@@ -51,7 +51,9 @@ export function DirectionsStackCarousel({ directions }: { directions: Direction[
             className="glass-subtle glass-float glass-interactive absolute top-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full text-lg text-[var(--text-primary)]"
             style={{ left: "50%", transform: `translate(calc(-50% - ${CARD_WIDTH / 2 + 24}px), -50%)` }}
           >
-            ‹
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M10 3.5 5.5 8l4.5 4.5" />
+            </svg>
           </button>
           <button
             type="button"
@@ -60,7 +62,9 @@ export function DirectionsStackCarousel({ directions }: { directions: Direction[
             className="glass-subtle glass-float glass-interactive absolute top-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full text-lg text-[var(--text-primary)]"
             style={{ left: "50%", transform: `translate(calc(-50% + ${CARD_WIDTH / 2 + 24}px), -50%)` }}
           >
-            ›
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M6 3.5 10.5 8 6 12.5" />
+            </svg>
           </button>
         </>
       )}
@@ -85,11 +89,15 @@ export function DirectionsStackCarousel({ directions }: { directions: Direction[
 
         const isActive = offset === 0;
 
+        // Активная карточка — парящий слой (размывает сцену под собой),
+        // соседние лежат глубже: без своего размытия, затемнены и
+        // расфокусированы filter-ом — так одна карточка в фокусе, а не
+        // ряд одинаковых стеклянных плашек.
         return (
           <div
             key={direction.key}
             aria-hidden={!isActive}
-            className="glass-medium absolute top-1/2 left-1/2 flex w-72 flex-col gap-3 rounded-[28px] p-7"
+            className={`glass-medium absolute top-1/2 left-1/2 flex w-72 flex-col gap-3 rounded-[28px] p-7 ${isActive ? "glass-float" : ""}`}
             style={{
               transform: `translate(-50%, -50%) translateX(${translateX}px) scale(${scale})`,
               opacity,
@@ -106,7 +114,7 @@ export function DirectionsStackCarousel({ directions }: { directions: Direction[
           >
             <div>
               <h2 className="font-heading mb-2 text-xl font-bold tracking-tight">{direction.label}</h2>
-              <span className="inline-block rounded-full bg-[var(--primary-light)] px-3 py-0.5 text-xs font-semibold text-[var(--accent-dark)]">
+              <span className="glass-quiet inline-block rounded-full px-3 py-0.5 text-xs font-semibold text-[var(--accent-dark)]">
                 {direction.level}
               </span>
             </div>

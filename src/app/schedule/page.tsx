@@ -74,7 +74,7 @@ export default async function SchedulePage({
         />
       )}
       {bookError && (
-        <div className="rounded-md bg-[var(--danger-bg)] p-3 text-sm text-[var(--danger-text)]">
+        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
           <p>{bookError}</p>
           {/* Нет занятий на балансе — сразу путь к покупке, как в боте. */}
           {bookError.toLowerCase().includes("баланс") && (
@@ -130,7 +130,7 @@ function BookedNotice({
     ? cancellationDeadline(slot.starts_at, cancellationDeadlineHours)
     : null;
   return (
-    <div className="flex flex-col gap-1 rounded-md bg-[var(--success-bg)] p-3 text-sm text-[var(--success-text)]">
+    <div className="flex flex-col gap-1 rounded-2xl border border-[color-mix(in_srgb,var(--success-text)_22%,transparent)] bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success-text)]">
       <p className="font-semibold">
         {already ? "Вы уже записаны на это занятие." : "Вы записаны ✓"}
       </p>

@@ -18,7 +18,7 @@ export async function SiteHeader() {
   const authSection = currentUser ? (
     <form action={logoutAction} className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
       <NavLink href="/account">{currentUser.display_name}</NavLink>
-      <button type="submit" className={`${NAV_ITEM_CLASS} text-[var(--text-secondary)] hover:text-[var(--primary)]`}>
+      <button type="submit" className={`${NAV_ITEM_CLASS} text-[var(--text-secondary)] hover:text-[var(--primary-text)]`}>
         Выйти
       </button>
     </form>
@@ -42,9 +42,9 @@ export async function SiteHeader() {
           globals.css (--header-collapse, пишет GlassController). Панель
           шириной по содержимому (w-fit) и по центру: при сворачивании она
           непрерывно сужается вокруг навигации, а не остаётся широкой
-          плашкой с пустым краем. ThemeToggle намеренно вне этой группы —
+          плашкой с пустым краем. Отступы капсулы — в globals.css (.site-header-bar). ThemeToggle намеренно вне этой группы —
           не участвует в сворачивании. */}
-      <div className="site-header-bar header-row mx-auto flex w-fit max-w-full items-center gap-2 px-2.5 sm:max-w-5xl sm:gap-3 sm:px-4">
+      <div className="site-header-bar header-row mx-auto flex w-fit max-w-full items-center gap-2 sm:max-w-5xl sm:gap-3">
         <Link
           href="/"
           className="header-logo font-heading min-w-0 text-ellipsis whitespace-nowrap text-[17px] font-bold tracking-wide text-[var(--accent-dark)] sm:text-[20px] md:shrink-0 lg:text-[24px]"

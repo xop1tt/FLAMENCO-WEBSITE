@@ -81,7 +81,7 @@ export function ThemeToggle() {
       // поэтому подпись может на долю секунды отличаться от финальной —
       // ожидаемо и безопасно, гасим предупреждение React об этом.
       suppressHydrationWarning
-      className="glass-subtle glass-interactive flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--text-primary)] hover:text-[var(--primary)]"
+      className="glass-subtle glass-interactive flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--text-primary)] hover:text-[var(--primary-text)]"
     >
       <ThemeIcon resolved={resolved} />
     </button>
