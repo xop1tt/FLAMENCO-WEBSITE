@@ -884,6 +884,11 @@ body:has(.scenes) .site-header {
   margin-right: calc(-10px - var(--collapse) * 12px);
 }
 
+/* У администратора в той же группе ещё ссылка «Админка». */
+.header-cta.header-cta-wide {
+  --w: 340px;
+}
+
 .header-logo {
   --w: 240px;
   margin-right: calc(var(--collapse) * -12px);

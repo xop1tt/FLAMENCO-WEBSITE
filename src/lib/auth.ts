@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { requestJson } from "./apiResult";
 
@@ -18,6 +19,9 @@ export type CurrentUser = {
   telegram_id: number | null;
   display_name: string;
   created_at: string;
+  // Только для отображения (ссылка на админку, окно нагрузки): права
+  // проверяет backend на каждом /api/admin/*.
+  is_admin: boolean;
 };
 
 /**
@@ -34,9 +38,10 @@ export type SessionState =
 /**
  * Читает сессию на сервере (Server Component), пересылая cookie бэкенду
  * напрямую (не через rewrite в next.config.ts — тот нужен для запросов из
- * браузера, а не сервер-сервер).
+ * браузера, а не сервер-сервер). `cache` — один запрос /me на рендер, сколько
+ * бы компонентов (шапка, окно администратора, страница) ни спрашивали.
  */
-export async function getSession(): Promise<SessionState> {
+export const getSession = cache(async function getSession(): Promise<SessionState> {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME);
   if (!session) {
@@ -52,7 +57,7 @@ export async function getSession(): Promise<SessionState> {
   return result.error === "unauthorized"
     ? { status: "anonymous" }
     : { status: "unavailable" };
-}
+});
 
 /** Текущий пользователь или `null` — для шапки и публичных страниц. */
 export async function getCurrentUser(): Promise<CurrentUser | null> {

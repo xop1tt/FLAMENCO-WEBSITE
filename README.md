@@ -25,13 +25,33 @@ FLAMENCO WEBSITE (Next.js) ──HTTP──▶ FastAPI API ──▶ PostgreSQL 
 сайту пока не подключена: `WEB_YOOKASSA_RETURN_URL` на backend пуст, поэтому
 checkout отвечает 503 — весь остальной код уже готов, см. раздел ниже.
 
+Вход и регистрация: по email/паролю (`/login`, `/register`) и через
+Telegram-бота (ссылка t.me/<бот>?start=…, подтверждение кнопкой в боте —
+работает и на localhost, в отличие от Login Widget). Покупка, запись,
+баланс и поддержка требуют привязанного Telegram (`/account` → «Привязать
+Telegram»); аккаунт, созданный только через Telegram, при привязке
+объединяется с аккаунтом по email, а такой аккаунт может задать себе email
+и пароль — дублей одного человека нет. Cookie сессии ставит сам сайт
+(server actions, `src/lib/authActions.ts`), `Secure` — только в production.
+
+Админка `/admin` (сводка, расписание, участники, платежи, поддержка) и
+плавающее окно «Нагрузка» на всех страницах — только для администраторов;
+права проверяет backend на каждом `/api/admin/*`. Администратора создаёт
+серверная команда backend `python -m flamenco_bot.api.manage create-admin`.
+
 ## Запуск
 
 ```bash
 npm install
 cp .env.example .env.local   # укажите API_BASE_URL и NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
 npm run dev                  # http://localhost:3000
+npm run dev:https            # https://localhost:3000 (самоподписанный сертификат)
 ```
+
+`dev:https` (`next dev --experimental-https`) при первом запуске создаёт
+сертификат для localhost в `certificates/` (не коммитится) — нужен, чтобы
+проверить на localhost то, что работает только по HTTPS. Из корня
+`PROJECT 1` то же самое: `./start-mac.command --https`.
 
 На `npm run dev` (`localhost`) виджет **всегда** покажет «Bot domain
 invalid» — это не баг, а намеренное ограничение Telegram: виджет работает
@@ -232,10 +252,23 @@ backend-проекта.
 ## Развёртывание (Docker)
 
 `Dockerfile` собирает standalone-образ Next.js, `compose.yaml` запускает его
-как сервис `frontend` (порт 3000 опубликован только на `127.0.0.1` хоста;
-перед ним нужен TLS-терминирующий edge-прокси, который записывает IP клиента
-в `X-Forwarded-For` — см. `docs/deployment.md` backend-проекта, раздел «IP
-клиента и rate limit входа»). `API_BASE_URL` передаётся и как build arg:
+как сервис `frontend` (порт 3000 опубликован только на `127.0.0.1` хоста) и
+перед ним — сервис `caddy`, edge-прокси с HTTPS (`deploy/Caddyfile`):
+
+- сертификат Let's Encrypt для `SITE_DOMAIN` Caddy выпускает и продлевает
+  сам (хранится в томе `caddy_data`); http → https — редирект 308;
+- `Strict-Transport-Security` (1 год), HTTP/2 и HTTP/3;
+- в `X-Forwarded-For` — настоящий IP клиента (подставленный клиентом
+  заголовок игнорируется), его использует rate limit входа на backend
+  (`docs/deployment.md` backend-проекта, «IP клиента и rate limit входа»);
+- тело запроса не больше 1 МБ, к Next.js — не больше 64 запросов
+  одновременно (остальные ждут в очереди, а не получают 502).
+
+Перед запуском: DNS-запись домена указывает на сервер, порты 80 и 443
+открыты, в `.env` заданы `SITE_DOMAIN` и `ACME_EMAIL`. Остальные защитные
+заголовки (CSP `frame-ancestors`, `X-Frame-Options`, `nosniff`,
+`Referrer-Policy`, `Permissions-Policy`) ставит сам Next.js
+(`next.config.ts`). `API_BASE_URL` передаётся и как build arg:
 адрес rewrite `/api/*` Next.js фиксирует при сборке. Сайт обращается к сервису `api`
 backend-проекта по адресу `http://api:8000` через общую docker-сеть
 `flamenco-web`; её создаёт `compose.yaml` backend'а, поэтому порядок такой:
@@ -245,7 +278,33 @@ backend-проекта по адресу `http://api:8000` через общую
 docker compose up -d --build
 
 # 2. сайт — в этом каталоге
-cp .env.example .env          # NEXT_PUBLIC_TELEGRAM_BOT_USERNAME для сборки
+cp .env.example .env          # NEXT_PUBLIC_TELEGRAM_BOT_USERNAME, SITE_DOMAIN, ACME_EMAIL
 docker compose up -d --build
-curl http://localhost:3000/api/health   # проксируется к api
+curl http://localhost:3000/api/health          # проксируется к api
+curl -I https://$SITE_DOMAIN/                  # снаружи — через caddy по HTTPS
 ```
+
+После запуска по HTTPS: привяжите домен к боту в @BotFather (`/setdomain`)
+и, когда будете включать оплату, укажите на backend
+`WEB_YOOKASSA_RETURN_URL=https://<домен>/account/payments`.
+
+### Нагрузка
+
+Проверено autocannon на production-сборке через Caddy по HTTPS (один
+процесс Next.js и один API, MacBook, 20 с на сценарий):
+
+| Сценарий | Соединений | Запросов/с | p50 | p99 | Ошибки |
+|---|---:|---:|---:|---:|---:|
+| `/` главная | 10 | 263 | 37 мс | 86 мс | 0 |
+| `/` главная | 50 | 272 | 182 мс | 277 мс | 0 |
+| `/` главная | 200 | 243 | 816 мс | 1004 мс | 0 |
+| `/` главная | 500 | 245 | 1994 мс | 2230 мс | 0 |
+| `/schedule` | 50 | 206 | 240 мс | 389 мс | 0 |
+| `/packages` | 50 | 732 | 66 мс | 96 мс | 0 |
+| `/contact` | 50 | 862 | 56 мс | 81 мс | 0 |
+| `/api/health` (прокси → API → БД) | 50 | 1642 | 28 мс | 101 мс | 0 |
+
+Предел — CPU рендера страниц в Next.js (один поток), не API и не
+PostgreSQL. До лимита `max_conns_per_host` в Caddyfile при 200 соединениях
+86% ответов главной были 502. Если упрётесь в ~250 запросов/с на главную,
+масштабировать нужно `frontend` (несколько процессов), а не backend.

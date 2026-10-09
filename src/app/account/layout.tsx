@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { AccountNav } from "@/components/AccountNav";
 import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
+import { TelegramConnect } from "@/components/TelegramConnect";
 
 const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
@@ -48,11 +49,26 @@ export default async function AccountLayout({
       {currentUser === null ? (
         <ServiceUnavailableNotice />
       ) : currentUser.telegram_id === null ? (
-        <p className="rounded-[24px] glass-medium p-6 text-base leading-relaxed text-[var(--text-secondary)]">
-          Привяжите Telegram к аккаунту, чтобы видеть профиль, баланс занятий
-          и записи — на сайте пока нет формы для этого, напишите в «💬 Помощь»
-          в Telegram-боте студии.
-        </p>
+        <section className="flex flex-col gap-4 rounded-[24px] glass-medium p-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="font-heading text-xl font-bold tracking-tight">
+              Привяжите Telegram
+            </h2>
+            <p className="text-base leading-relaxed text-[var(--text-secondary)]">
+              Покупка абонементов, запись на занятия, баланс и обращения в
+              поддержку работают только с привязанным Telegram — это общий
+              профиль с ботом студии. Email и пароль ({currentUser.email})
+              останутся для входа на сайт.
+            </p>
+            <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+              Если вы уже входили на сайт через Telegram, аккаунты
+              объединятся — второго не будет.
+            </p>
+          </div>
+          <div className="max-w-sm">
+            <TelegramConnect purpose="link" />
+          </div>
+        </section>
       ) : (
         children
       )}

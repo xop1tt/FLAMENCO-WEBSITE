@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+# самоподписанный сертификат `npm run dev:https`
+/certificates
 
 # debug
 npm-debug.log*

@@ -10,9 +10,12 @@ type Props = {
   // карточка ведёт на /packages вместо покупки. Покупка доступна только на
   // самой странице /packages, где isAuthenticated передаётся явно.
   isAuthenticated?: boolean;
+  // Покупка требует привязанного Telegram (backend: 409 без него) — вместо
+  // «Оплатить» ведём в личный кабинет привязать его.
+  hasTelegram?: boolean;
 };
 
-export function PackagesGrid({ packages, isAuthenticated }: Props) {
+export function PackagesGrid({ packages, isAuthenticated, hasTelegram = false }: Props) {
   if (packages.length === 0) {
     return (
       <div className="glass-medium flex flex-col items-start gap-3 rounded-[24px] p-6">
@@ -89,6 +92,13 @@ export function PackagesGrid({ packages, isAuthenticated }: Props) {
               >
                 Подробнее →
               </Link>
+            ) : isAuthenticated && !hasTelegram ? (
+              <Link
+                href="/account"
+                className={`${GLASS_BUTTON_CLASS} block w-full px-4 py-2.5 text-center text-sm`}
+              >
+                Привязать Telegram для покупки
+              </Link>
             ) : isAuthenticated ? (
               <form action={startCheckoutAction}>
                 <input type="hidden" name="package_key" value={lessonPackage.key} />
@@ -101,8 +111,8 @@ export function PackagesGrid({ packages, isAuthenticated }: Props) {
               </form>
             ) : (
               <Link
-                href="/login"
-                className="btn-primary flex w-full rounded-full px-4 py-2.5 text-center text-sm font-medium"
+                href="/login?next=/packages"
+                className="btn-primary flex w-full justify-center rounded-full px-4 py-2.5 text-center text-sm font-medium"
               >
                 Войти и оплатить
               </Link>

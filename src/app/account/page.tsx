@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/account";
+import { getCurrentUser } from "@/lib/auth";
+import { SetCredentialsForm } from "@/components/SetCredentialsForm";
 import { isServiceFailure } from "@/lib/apiResult";
 import { ServiceUnavailableNotice } from "@/components/ServiceUnavailableNotice";
 import Link from "next/link";
 import { lessonsCount } from "@/lib/format";
-import { GLASS_BUTTON_CLASS, PRIMARY_BUTTON_CLASS } from "@/lib/glass";
+import {
+  GLASS_BUTTON_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SUCCESS_NOTICE_CLASS,
+} from "@/lib/glass";
 
 export const metadata: Metadata = {
   title: "Профиль",
 };
 
-export default async function AccountProfilePage() {
-  const result = await getProfile();
+type SearchParams = Promise<{ credentials?: string }>;
+
+export default async function AccountProfilePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { credentials } = await searchParams;
+  const [result, currentUser] = await Promise.all([getProfile(), getCurrentUser()]);
 
   if (!result.ok && result.error === "unauthorized") {
     redirect("/login");
@@ -40,6 +53,28 @@ export default async function AccountProfilePage() {
         <p className="mt-4 text-sm text-[var(--text-secondary)]">
           Имя и телефон меняются в Telegram-боте студии: «👤 Профиль».
         </p>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-[24px] glass-medium p-6">
+        <h2 className="font-heading text-xl font-bold tracking-tight">Вход на сайт</h2>
+        {credentials === "1" && (
+          <p className={SUCCESS_NOTICE_CLASS}>
+            Email и пароль сохранены — теперь можно входить и по ним.
+          </p>
+        )}
+        <dl className="flex flex-col gap-3">
+          <Row label="Telegram" value="привязан ✓" />
+          {currentUser?.email && <Row label="Email" value={currentUser.email} />}
+        </dl>
+        {currentUser && !currentUser.email && (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+              Задайте email и пароль, чтобы входить на сайт и без Telegram.
+              Это тот же аккаунт — баланс и записи общие.
+            </p>
+            <SetCredentialsForm />
+          </div>
+        )}
       </section>
 
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-[24px] glass-medium p-6">

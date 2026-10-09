@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { requestJson, type ApiResult } from "./apiResult";
+import { getSession } from "./auth";
 
 /**
  * Личный кабинет (Stage 5): профиль, баланс, мои занятия, поддержка.
@@ -16,6 +17,13 @@ async function fetchWithSession<T>(path: string): Promise<ApiResult<T>> {
   const session = cookieStore.get(SESSION_COOKIE_NAME);
   if (!session) {
     return { ok: false, error: "unauthorized", status: null };
+  }
+  // Данные кабинета backend отдаёт только с привязанным Telegram (409 без
+  // него) — не спрашиваем заранее известный отказ. getSession кэширован на
+  // рендер, лишнего запроса /me нет.
+  const current = await getSession();
+  if (current.status === "authenticated" && current.user.telegram_id === null) {
+    return { ok: false, error: "client_error", status: 409 };
   }
   return requestJson<T>(`${API_BASE_URL}${path}`, {
     headers: { cookie: `${SESSION_COOKIE_NAME}=${session.value}` },

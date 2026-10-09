@@ -18,3 +18,13 @@ export const GLASS_BUTTON_CLASS =
 // (.btn-primary). Размеры задаёт вызывающий.
 export const PRIMARY_BUTTON_CLASS =
   "btn-primary rounded-full font-semibold";
+
+// Поле ввода (input/textarea/select) — как форма обращения в поддержку.
+export const INPUT_CLASS =
+  "glass-quiet w-full rounded-2xl px-3 py-2.5 text-base transition-[border-color] focus:border-[var(--primary)] focus:outline-none focus:ring-3 focus:ring-[color-mix(in_srgb,var(--primary)_28%,transparent)]";
+
+// Сообщения об ошибке и успехе.
+export const ERROR_NOTICE_CLASS =
+  "rounded-2xl border border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]";
+export const SUCCESS_NOTICE_CLASS =
+  "rounded-2xl bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success-text)]";

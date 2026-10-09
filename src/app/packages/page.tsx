@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getPackages } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { PackagesGrid } from "@/components/PackagesGrid";
@@ -42,15 +43,28 @@ export default async function PackagesPage({
       )}
       {!currentUser && (
         <p className="text-sm text-[var(--text-secondary)]">
-          Вход через Telegram нужен, чтобы абонемент и записи сохранялись в
-          вашем профиле — это тот же аккаунт, что в боте студии, входить
-          заново для каждой записи не придётся.
+          Для покупки войдите по email или через Telegram. Абонемент
+          зачисляется на профиль в Telegram-боте студии — это тот же аккаунт,
+          поэтому к нему нужно привязать Telegram.
+        </p>
+      )}
+      {currentUser && currentUser.telegram_id === null && (
+        <p className="rounded-2xl glass-subtle px-4 py-3 text-sm text-[var(--text-secondary)]">
+          Чтобы купить абонемент, привяжите Telegram в{" "}
+          <Link
+            href="/account"
+            className="font-medium text-[var(--primary-text)] underline-offset-4 hover:underline"
+          >
+            личном кабинете
+          </Link>
+          : баланс занятий общий с ботом студии.
         </p>
       )}
       {packages.ok ? (
         <PackagesGrid
           packages={packages.data}
           isAuthenticated={currentUser !== null}
+          hasTelegram={currentUser?.telegram_id != null}
         />
       ) : (
         <ServiceUnavailableNotice />

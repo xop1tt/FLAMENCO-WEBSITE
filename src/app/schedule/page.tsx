@@ -105,6 +105,7 @@ export default async function SchedulePage({
           classKey={activeDirection?.key ?? null}
           cancellationDeadlineHours={rules.cancellation_deadline_hours}
           bookedSlotIds={bookedSlotIds}
+          hasTelegram={currentUser?.telegram_id != null}
         />
       ) : (
         <ServiceUnavailableNotice />

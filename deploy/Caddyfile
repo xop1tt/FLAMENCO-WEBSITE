@@ -1,0 +1,40 @@
+# Edge-прокси сайта (сервис `caddy` в compose.yaml): HTTPS с автоматическим
+# сертификатом Let's Encrypt для SITE_DOMAIN, редирект http → https,
+# HSTS и X-Forwarded-For с IP клиента для rate limit входа на backend.
+#
+# Требования: DNS-запись A/AAAA домена указывает на этот сервер, порты 80
+# и 443 открыты наружу (80 нужен для выпуска сертификата и редиректа).
+{
+	email {$ACME_EMAIL}
+}
+
+{$SITE_DOMAIN} {
+	# Тела запросов сайта — формы входа, записи и поддержки (до 2000
+	# символов): больше 1 МБ не бывает, крупнее — отбрасываем до Next.js.
+	request_body {
+		max_size 1MB
+	}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+		-X-Powered-By
+	}
+
+	# Без trusted_proxies Caddy не доверяет X-Forwarded-For от клиента и
+	# записывает в него настоящий IP соединения — подставить свой адрес и
+	# обойти rate limit входа нельзя (backend docs/deployment.md).
+	#
+	# max_conns_per_host: не больше 64 одновременных запросов к Next.js,
+	# остальные ждут в очереди Caddy. Без лимита при всплеске (нагрузочный
+	# тест: 200 соединений на главную) Caddy открывал всё новые соединения,
+	# очередь accept у Next.js переполнялась и 86% ответов были 502; с
+	# лимитом — 0 ошибок при 200 и 500 соединениях, растёт только задержка.
+	reverse_proxy frontend:3000 {
+		transport http {
+			max_conns_per_host 64
+		}
+	}
+}

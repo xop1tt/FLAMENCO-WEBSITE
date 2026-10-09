@@ -3,6 +3,7 @@ import { Comfortaa } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { GlassController } from "@/components/GlassController";
+import { AdminLoadWidgetSlot } from "@/components/admin/AdminLoadWidgetSlot";
 import "./globals.css";
 
 // Geist/Geist Mono были в стартовом шаблоне Next.js, но сайт нигде не
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <AdminLoadWidgetSlot />
       </body>
     </html>
   );

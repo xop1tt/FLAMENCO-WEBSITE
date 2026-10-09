@@ -13,6 +13,8 @@ const TIME_ZONE =
   (typeof process !== "undefined" ? process.env.STUDIO_TIMEZONE?.trim() : "") ||
   "Europe/Moscow";
 
+export const STUDIO_TIMEZONE = TIME_ZONE;
+
 const partsFormatter = new Intl.DateTimeFormat("ru-RU", {
   timeZone: TIME_ZONE,
   weekday: "short",

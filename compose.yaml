@@ -1,7 +1,7 @@
 services:
-  # Публичный сайт (Next.js). Единственный сервис системы с портом,
-  # опубликованным на хост (только 127.0.0.1) — перед ним должен стоять
-  # TLS-терминирующий edge-прокси на том же хосте, сам он слушает только HTTP.
+  # Публичный сайт (Next.js). Сам слушает только HTTP; HTTPS для него
+  # терминирует сервис `caddy` ниже (порт 3000 на хосте — только 127.0.0.1,
+  # для проверок с самого сервера).
   #
   # Backend (бот + веб-API) — отдельный проект со своим compose.yaml. Сайт
   # обращается к его сервису `api` по имени в общей docker-сети
@@ -45,7 +45,7 @@ services:
     security_opt:
       - no-new-privileges:true
     # Только на localhost хоста: снаружи сайт доступен лишь через edge-прокси
-    # (TLS), который записывает IP клиента в X-Forwarded-For. Прямой доступ к
+    # (`caddy`, TLS), который записывает IP клиента в X-Forwarded-For. Прямой доступ к
     # :3000 позволил бы подставить свой X-Forwarded-For и обойти rate limit
     # входа — Next.js передаёт этот заголовок в api как есть.
     ports:
@@ -60,6 +60,50 @@ services:
       options:
         max-size: 10m
         max-file: "3"
+
+  # Edge-прокси: HTTPS (Let's Encrypt), редирект http → https, HSTS и
+  # X-Forwarded-For с IP клиента — см. deploy/Caddyfile. Единственный
+  # сервис с портами наружу. Домен и email для Let's Encrypt — из .env
+  # рядом с этим файлом (SITE_DOMAIN, ACME_EMAIL, см. .env.example).
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN to the site's public domain, e.g. flamenco.example}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL for Let's Encrypt certificate notices}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Сертификаты и ключ ACME-аккаунта: без постоянного тома каждый
+      # перезапуск выпускал бы новый сертификат и упёрся бы в лимиты
+      # Let's Encrypt.
+      - caddy_data:/data
+      - caddy_config:/config
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - flamenco-web
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:
 
 networks:
   flamenco-web:

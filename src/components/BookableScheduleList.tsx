@@ -15,6 +15,8 @@ type Props = {
   // Занятия с подтверждённой записью текущего пользователя
   // (GET /api/bookings/me) — вместо кнопки показывается «Вы записаны».
   bookedSlotIds?: ReadonlySet<number>;
+  // Запись требует привязанного Telegram (backend: 409 без него).
+  hasTelegram?: boolean;
 };
 
 const NO_BOOKINGS: ReadonlySet<number> = new Set();
@@ -27,6 +29,7 @@ export function BookableScheduleList({
   classKey,
   cancellationDeadlineHours,
   bookedSlotIds = NO_BOOKINGS,
+  hasTelegram = false,
 }: Props) {
   // Своё занятие показываем, даже если свободных мест уже не осталось.
   const bookable = slots.filter(
@@ -48,6 +51,7 @@ export function BookableScheduleList({
           irreversible={new Date(slot.starts_at).getTime() < lateFrom}
           cancellationDeadlineHours={cancellationDeadlineHours}
           booked={bookedSlotIds.has(slot.id)}
+          hasTelegram={hasTelegram}
         />
       ))}
     </ul>
@@ -67,6 +71,7 @@ function BookableScheduleCard({
   irreversible,
   cancellationDeadlineHours,
   booked,
+  hasTelegram,
 }: {
   slot: ClassSlot;
   isAuthenticated: boolean;
@@ -74,6 +79,7 @@ function BookableScheduleCard({
   irreversible: boolean;
   cancellationDeadlineHours: number;
   booked: boolean;
+  hasTelegram: boolean;
 }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] glass-medium glass-specular p-5">
@@ -108,6 +114,13 @@ function BookableScheduleCard({
             Мои занятия
           </Link>
         </div>
+      ) : isAuthenticated && !hasTelegram ? (
+        <Link
+          href="/account"
+          className="btn-primary shrink-0 rounded-full px-4 py-2 text-sm font-medium"
+        >
+          Привязать Telegram
+        </Link>
       ) : isAuthenticated ? (
         <form action={bookClassAction}>
           <input type="hidden" name="slot_id" value={slot.id} />
@@ -130,7 +143,7 @@ function BookableScheduleCard({
         </form>
       ) : (
         <Link
-          href="/login"
+          href="/login?next=/schedule"
           className="btn-primary shrink-0 rounded-full px-4 py-2 text-sm font-medium"
         >
           Войти и записаться
