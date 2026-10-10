@@ -4,10 +4,11 @@ Next.js (App Router) + TypeScript + Tailwind CSS. Второй интерфей�
 Telegram-ботом) к одному и тому же backend: сайт не хранит бизнес-данные и
 не дублирует бизнес-логику бота, только отображает то, что отдаёт веб-API.
 
-Это самостоятельный проект со своим git-репозиторием. Backend — Telegram-бот,
-веб-API (FastAPI, `src/flamenco_bot/api`), миграции и PostgreSQL — живёт в
-отдельном репозитории `flamenco-studio-bot` (локально — папка `TG BOT`
-рядом с этой); там же `README.md` и `WEBSITE_PLAN.md` с общей архитектурой.
+Это самостоятельный проект со своим git-репозиторием. Backend — Telegram-бот
+и веб-API (FastAPI, `src/flamenco_bot/api`) — живёт в отдельном репозитории
+`flamenco-studio-bot` (локально — папка `TG BOT` рядом с этой); там же
+`README.md` и `WEBSITE_PLAN.md` с общей архитектурой. Схема PostgreSQL и её
+миграции — в репозитории `flamenco-db` (папка `FLAMENCO DB`).
 Единственная связь между проектами — HTTP-запросы сайта к API
 (`API_BASE_URL`):
 
@@ -53,15 +54,8 @@ npm run dev:https            # https://localhost:3000 (самоподписан�
 проверить на localhost то, что работает только по HTTPS. Из корня
 `PROJECT 1` то же самое: `./start-mac.command --https`.
 
-На `npm run dev` (`localhost`) виджет **всегда** покажет «Bot domain
-invalid» — это не баг, а намеренное ограничение Telegram: виджет работает
-только на настоящем публичном HTTPS-домене, привязанном к боту через
-@BotFather (`/setdomain`). Подтверждено на практике, не только по
-документации. Проверять живой вход имеет смысл только на реальном домене
-после деплоя (Stage 6+) либо через временный HTTPS-туннель (ngrok/cloudflared)
-с доменом, временно привязанным через `/setdomain`. До тех пор серверная
-часть входа (`/api/auth/telegram`, cookie, `/account`) проверяется напрямую
-HTTP-запросами с подписанным payload — см. коммиты Stage 4/5.
+Вход через Telegram (`TelegramConnect`, ссылка на бота с одноразовым кодом)
+работает и на `localhost`: домен в @BotFather привязывать не нужно.
 
 Откройте http://localhost:3000. По умолчанию сайт обращается к backend API
 на `http://127.0.0.1:8000` — поднимите его отдельно, в backend-проекте:
@@ -89,7 +83,8 @@ cd "../TG BOT"
 | Переменная | Обязательно | Назначение |
 |---|:---:|---|
 | `API_BASE_URL` | Нет (по умолчанию `http://127.0.0.1:8000`) | Базовый URL backend API. Запросы идут с сервера Next.js (серверные компоненты), а не из браузера — переменная намеренно без префикса `NEXT_PUBLIC_`, чтобы не попасть в клиентский бандл. |
-| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Для `/login` | Публичный `@username` бота для Telegram Login Widget (не секрет). Инлайнится в клиентский бандл на этапе `next build` — в Docker это build arg, а не runtime-переменная (см. `compose.yaml`). |
+| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Да | Публичный `@username` бота (не секрет): ссылки на бота на главной, в контактах и кабинете. Инлайнится в клиентский бандл на этапе `next build` — в Docker это build arg, а не runtime-переменная (см. `compose.yaml`). |
+| `FRONTEND_PROXY_SECRET` | На Netlify | Общий секрет с backend (≥ 32 символов, то же значение, что `FRONTEND_PROXY_SECRET` в Render): сервер сайта передаёт IP посетителя (`x-nf-client-connection-ip`) для rate limit входа. Только сервер. |
 
 ## Данные и кэширование
 
@@ -111,7 +106,7 @@ cd "../TG BOT"
 ```text
 src/
 ├── app/
-│   ├── login/      # Telegram Login Widget, редирект на / если уже вошёл
+│   ├── login/      # вход по email и через бота, редирект на / если уже вошёл
 │   └── account/     # личный кабинет (Stage 5), требует сессию
 │       ├── layout.tsx    # guard: редирект на /login без сессии
 │       ├── page.tsx       # профиль + баланс (GET /api/users/me/profile)
@@ -120,8 +115,8 @@ src/
 │       │                  # (GET /api/payments/me, GET /api/payments/:id/check)
 │       └── support/       # обращения: форма + список (GET/POST /api/support)
 ├── components/
-│   ├── TelegramLoginWidget.tsx   # клиентский компонент — грузит виджет,
-│   │                             # шлёт POST /api/auth/telegram
+│   ├── TelegramConnect.tsx       # вход/привязка через бота (deep link,
+│   │                             # ожидание подтверждения в боте)
 │   ├── AccountNav.tsx            # суб-навигация внутри /account
 │   ├── BookableScheduleList.tsx  # расписание с кнопкой «Записаться» —
 │   │                              # используется на /schedule (не на главной)
@@ -193,8 +188,7 @@ src/components/
 - Без JS и при `prefers-reduced-motion` сцены — обычные блоки в потоке
   страницы со статичным кадром hero.
 
-Запросы из браузера к `/api/*` (например, `TelegramLoginWidget` →
-`POST /api/auth/telegram`) идут на тот же origin сайта и проксируются к
+Запросы из браузера к `/api/*` идут на тот же origin сайта и проксируются к
 backend через `rewrites()` в `next.config.ts` — отдельного CORS или
 публичного порта у `api` для этого не нужно.
 
@@ -284,8 +278,7 @@ curl http://localhost:3000/api/health          # проксируется к api
 curl -I https://$SITE_DOMAIN/                  # снаружи — через caddy по HTTPS
 ```
 
-После запуска по HTTPS: привяжите домен к боту в @BotFather (`/setdomain`)
-и, когда будете включать оплату, укажите на backend
+После запуска по HTTPS, когда будете включать оплату, укажите на backend
 `WEB_YOOKASSA_RETURN_URL=https://<домен>/account/payments`.
 
 ### Нагрузка
