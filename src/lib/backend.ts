@@ -18,6 +18,12 @@ export const CONNECT_COOKIE_NAME = "tg_connect";
 
 const SECURE_COOKIES = process.env.NODE_ENV === "production";
 
+// Netlify → Render: адрес сервера сайта у backend заранее неизвестен, поэтому
+// IP посетителя (заголовок Netlify `x-nf-client-connection-ip`, клиент его
+// подделать не может) передаётся вместе с общим секретом — backend
+// принимает его только с верным FRONTEND_PROXY_SECRET. Только сервер.
+const FRONTEND_PROXY_SECRET = process.env.FRONTEND_PROXY_SECRET?.trim() ?? "";
+
 /** Cookie сессии и IP клиента — чтобы rate limit входа на backend считал
  * попытки по посетителю, а не по серверу сайта (X-Forwarded-For пишет
  * edge-прокси; backend доверяет ему только от адреса сайта). */
@@ -37,6 +43,11 @@ export async function backendHeaders(
   const forwardedFor = incoming.get("x-forwarded-for");
   if (forwardedFor) {
     result["x-forwarded-for"] = forwardedFor;
+  }
+  const visitorIp = incoming.get("x-nf-client-connection-ip");
+  if (FRONTEND_PROXY_SECRET && visitorIp) {
+    result["x-flamenco-frontend-secret"] = FRONTEND_PROXY_SECRET;
+    result["x-flamenco-client-ip"] = visitorIp;
   }
   return result;
 }

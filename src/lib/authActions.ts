@@ -83,6 +83,48 @@ export async function loginAction(_: FormState, formData: FormData): Promise<For
   redirect(safeNext(formData.get("next")));
 }
 
+/** Поля Telegram Login Widget; подпись (`hash`) проверяет backend. */
+export type TelegramWidgetUser = {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+};
+
+/**
+ * Вход через Telegram Login Widget — тоже через сервер сайта, а не rewrite
+ * из браузера: так запрос получает IP посетителя для rate limit backend'а
+ * (backendHeaders), а cookie сессии ставит сам сайт.
+ */
+export async function telegramWidgetLoginAction(
+  user: TelegramWidgetUser,
+): Promise<{ error: string | null }> {
+  const { id, first_name, last_name, username, photo_url, auth_date, hash } = user;
+  const response = await post("/api/auth/telegram", {
+    id,
+    first_name,
+    last_name,
+    username,
+    photo_url,
+    auth_date,
+    hash,
+  });
+  if (!response?.ok) {
+    return failure(
+      response,
+      response?.status === 401
+        ? "Не удалось подтвердить вход через Telegram. Попробуйте ещё раз."
+        : null,
+      "Что-то пошло не так. Попробуйте ещё раз позже.",
+    );
+  }
+  await adoptSessionCookie(response);
+  return { error: null };
+}
+
 export async function registerAction(_: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");

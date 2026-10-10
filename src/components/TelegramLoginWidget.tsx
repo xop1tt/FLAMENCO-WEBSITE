@@ -3,22 +3,10 @@
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SERVICE_UNAVAILABLE_MESSAGE } from "@/lib/apiResult";
-
-/**
- * Поля, которые Telegram Login Widget передаёт в колбэк после входа.
- * Совпадает с `TelegramAuthRequest` на backend
- * (`flamenco-studio-bot/src/flamenco_bot/api/schemas.py`) — подпись (`hash`) проверяется там,
- * фронтенд ей не доверяет и ничего сам не проверяет.
- */
-type TelegramWidgetUser = {
-  id: number;
-  first_name?: string;
-  last_name?: string;
-  username?: string;
-  photo_url?: string;
-  auth_date: number;
-  hash: string;
-};
+// Поля виджета совпадают с `TelegramAuthRequest` на backend
+// (`flamenco-studio-bot/src/flamenco_bot/api/schemas.py`) — подпись (`hash`)
+// проверяется там, фронтенд ей не доверяет и ничего сам не проверяет.
+import { telegramWidgetLoginAction, type TelegramWidgetUser } from "@/lib/authActions";
 
 type TelegramAuthCallback = (user: TelegramWidgetUser) => void;
 
@@ -46,19 +34,9 @@ export function TelegramLoginWidget() {
       setError(null);
       setPending(true);
       try {
-        const response = await fetch("/api/auth/telegram", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(user),
-        });
-        if (!response.ok) {
-          setError(
-            response.status === 401
-              ? "Не удалось подтвердить вход через Telegram. Попробуйте ещё раз."
-              : response.status >= 500
-                ? SERVICE_UNAVAILABLE_MESSAGE
-                : "Что-то пошло не так. Попробуйте ещё раз позже.",
-          );
+        const { error: loginError } = await telegramWidgetLoginAction(user);
+        if (loginError) {
+          setError(loginError);
           setPending(false);
           return;
         }
