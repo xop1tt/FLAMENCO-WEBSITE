@@ -3,7 +3,7 @@
 # Flamenco Studio website
 
 - Presentation layer only. Data, business rules, auth and authorization live
-  in the backend API (`flamenco-studio-bot`, local folder `TG BOT`; its
+  in the backend API (`TELEGRAM-BOT`, local folder `TELEGRAM BOT`; its
   `CLAUDE.md` holds the system-wide rules). Never talk to PostgreSQL directly
   and never duplicate booking, payment or balance logic here.
 - Requests to the backend go from the Next.js server (`src/lib/*.ts`,

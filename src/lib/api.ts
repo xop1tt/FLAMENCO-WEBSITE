@@ -1,5 +1,5 @@
 /**
- * Тонкий клиент к backend API (`flamenco-studio-bot/src/flamenco_bot/api`).
+ * Тонкий клиент к backend API (`TELEGRAM-BOT/src/flamenco_bot/api`).
  *
  * Ошибка запроса возвращается как `ApiResult` (см. `apiResult.ts`), а не как
  * пустой список — страница показывает «сервис временно недоступен».

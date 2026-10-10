@@ -1,5 +1,5 @@
 // Контракт отображения времени: сайт показывает время в поясе студии.
-// Те же контрольные точки проверяет backend (flamenco-studio-bot,
+// Те же контрольные точки проверяет backend (TELEGRAM-BOT,
 // tests/unit/test_studio_time.py) — один и тот же момент из PostgreSQL
 // выглядит одинаково на сайте и в Telegram-боте.
 import assert from "node:assert/strict";

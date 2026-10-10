@@ -6,14 +6,14 @@ Telegram-ботом) к одному и тому же backend: сайт не х�
 
 Это самостоятельный проект со своим git-репозиторием. Backend — Telegram-бот
 и веб-API (FastAPI, `src/flamenco_bot/api`) — живёт в отдельном репозитории
-`flamenco-studio-bot` (локально — папка `TG BOT` рядом с этой); там же
+`TELEGRAM-BOT` (локально — папка `TELEGRAM BOT` рядом с этой); там же
 `README.md` и `WEBSITE_PLAN.md` с общей архитектурой. Схема PostgreSQL и её
-миграции — в репозитории `flamenco-db` (папка `FLAMENCO DB`).
+миграции — в репозитории `DATABASE` (папка `DATABASE`).
 Единственная связь между проектами — HTTP-запросы сайта к API
 (`API_BASE_URL`):
 
 ```text
-FLAMENCO WEBSITE (Next.js) ──HTTP──▶ FastAPI API ──▶ PostgreSQL ◀── Telegram-бот
+WEBSITE (Next.js) ──HTTP──▶ FastAPI API ──▶ PostgreSQL ◀── Telegram-бот
 ```
 
 Реализовано: публичные страницы без авторизации (Stage 3 — главная,
@@ -61,7 +61,7 @@ npm run dev:https            # https://localhost:3000 (самоподписан�
 на `http://127.0.0.1:8000` — поднимите его отдельно, в backend-проекте:
 
 ```bash
-cd "../TG BOT"
+cd "../TELEGRAM BOT"
 ./run.sh api     # только API (или ./run.sh — API + бот)
 ```
 

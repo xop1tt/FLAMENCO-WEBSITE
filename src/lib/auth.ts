@@ -4,7 +4,7 @@ import { requestJson } from "./apiResult";
 
 /**
  * Авторизация пользователя сайта (`/api/auth/*` на backend — см.
- * `flamenco-studio-bot/src/flamenco_bot/api/routers/auth.py`). Сессия —
+ * `TELEGRAM-BOT/src/flamenco_bot/api/routers/auth.py`). Сессия —
  * httponly-cookie `session` с непрозрачным токеном, который backend проверяет
  * по таблице `web_sessions`; фронтенд её не парсит и не проверяет сам, только
  * пересылает backend'у и спрашивает "кто я".
